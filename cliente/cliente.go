@@ -95,10 +95,10 @@ func conectarWebSocket() (*websocket.Conn, error) {
 func obtenerMensajes(conn *websocket.Conn, nickname, idsala, token, ultimoIdMensaje string) ([]MessageResponse, error) {
 	// Crear el mensaje de solicitud
 	requestData := map[string]string{
-		"nickname":     nickname,
-		"idsala":       idsala,
-		"tokensession": token,
-		"ultimomensaje": ultimoIdMensaje,
+		"nickName":        nickname,
+		"idSala":          idsala,
+		"tokenSesion":     token,
+		"idUltimoMensaje": ultimoIdMensaje,
 	}
 
 	// Convertir a JSON
