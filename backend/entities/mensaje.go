@@ -17,7 +17,7 @@ const (
 
 // Clase Mensaje
 type Mensaje struct {
-	Id          string      `json:"id"`
+	IDM         uuid.UUID   `json:"id"`
 	Tipo        TipoMensaje `json:"tipo"`
 	FechaEnvio  time.Time   `json:"fechaEnvio"`
 	FechaServer time.Time   `json:"fechaServer"`

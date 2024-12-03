@@ -1,7 +1,7 @@
 package api
 
 import (
-	"backend/models"  
+	"backend/models"
 	"backend/entities"   // Aquí se manejaría la validación del token de sesión
 	"backend/services" // Asegúrate de importar el paquete de servicios
 	"encoding/json"
@@ -28,40 +28,46 @@ type Response struct {
 }
 
 type MensajeResponse struct {
-	IdMensaje string `json:"idMensaje"`
-	Nickname  string `json:"nickname"`
-	Texto     string `json:"texto"`
+	IdMensaje uuid.UUID `json:"idMensaje"`
+	Nickname  string    `json:"nickname"`
+	Texto     string    `json:"texto"`
 }
 
+// Convertir los mensajes a la estructura de respuesta
 func ConvertirMensajes(mensajes []entities.Mensaje) []MensajeResponse {
+	log.Println("ConvertirMensajes: Iniciando conversión de mensajes.")
 	var respuesta []MensajeResponse
 	for _, mensaje := range mensajes {
 		respuesta = append(respuesta, MensajeResponse{
-			IdMensaje: mensaje.Id,
+			IdMensaje: mensaje.IDM,
 			Nickname:  mensaje.Nickname,
 			Texto:     mensaje.Mensaje,
 		})
 	}
+	log.Printf("ConvertirMensajes: Se han convertido %d mensajes.\n", len(respuesta))
 	return respuesta
 }
 
 // Manejador para la ruta POST /messagelist
 func PostListHandler(w http.ResponseWriter, r *http.Request) {
+	log.Println("PostListHandler: Iniciando el manejo de la solicitud POST para la lista de mensajes.")
+
 	// Decodificar el cuerpo de la solicitud
 	var requestData RequestData
 	err := json.NewDecoder(r.Body).Decode(&requestData)
 	if err != nil {
-		log.Println("Error al decodificar los datos:", err)
+		log.Println("PostListHandler: Error al decodificar los datos:", err)
 		http.Error(w, "Solicitud incorrecta", http.StatusBadRequest)
 		return
 	}
+	log.Printf("PostListHandler: Datos de solicitud decodificados: %+v\n", requestData)
 
 	// Obtener la instancia del singleton
-	secMod := services.NewSecModServidorChat()
-	user, err := secMod.GestionUsuarios.BuscarUsuarioPorToken (requestData.TokenSesion)
+	secMod := services.GetSecModServidorChat()
+	log.Println("PostListHandler: Obteniendo usuario por token de sesión.")
+	user, err := secMod.GestionUsuarios.BuscarUsuarioPorToken(requestData.TokenSesion)
 	if err != nil {
-		log.Println("Error BuscarUsuarioPorToken:", err)
-		// Si el token no es válido, devolver error
+		log.Println("PostListHandler: Error al buscar el usuario por token:", err)
 		response := Response{
 			Status:  "NOK",
 			Message: "Sesión de usuario inválida, por favor inicie sesión nuevamente. cod:01",
@@ -70,15 +76,15 @@ func PostListHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusUnauthorized)
 		json.NewEncoder(w).Encode(response)
 		return
- 
 	}
+
+	log.Println("PostListHandler: Validando token de sesión.")
 	_, err = models.ValidarTokenSesion(requestData.TokenSesion)
 	if err != nil {
-		fmt.Println("Error al validar el token:", err)
-		// Si el token no es válido, devolver error
+		log.Println("PostListHandler: Error al validar el token:", err)
 		response := Response{
 			Status:  "NOK",
-			Message: "Sesión de usuario inválida, por favor inicie sesión nuevamente.cod:02",
+			Message: "Sesión de usuario inválida, por favor inicie sesión nuevamente. cod:02",
 		}
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusUnauthorized)
@@ -88,35 +94,50 @@ func PostListHandler(w http.ResponseWriter, r *http.Request) {
 
 	tokenUser := user.Token
 	if tokenUser != requestData.TokenSesion {
-		fmt.Println("Error al validar el token: tokenUser != requestData.TokenSesion")
-		// Si el token no es válido, devolver error
+		log.Println("PostListHandler: Error de validación de token: tokenUser != requestData.TokenSesion")
 		response := Response{
 			Status:  "NOK",
-			Message: "Sesión de usuario inválida, por favor inicie sesión nuevamente.cod:03",
+			Message: "Sesión de usuario inválida, por favor inicie sesión nuevamente. cod:03",
 		}
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusUnauthorized)
 		json.NewEncoder(w).Encode(response)
 		return
 	}
+
+	log.Println("PostListHandler: Validando ID de sala.")
 	idSalaUUID, err := uuid.Parse(requestData.IdSala)
 	if err != nil {
-		// Si el IdSala no es un UUID válido, devolver un error
+		log.Println("PostListHandler: Error al validar el IdSala:", err)
 		http.Error(w, "IdSala no es un UUID válido", http.StatusBadRequest)
-				// Si el token no es válido, devolver error
-				response := Response{
-					Status:  "NOK",
-					Message: "Sala de chat inválida, por favor inicie sesión nuevamente.cod:04",
-				}
-				w.Header().Set("Content-Type", "application/json")
-				w.WriteHeader(http.StatusUnauthorized)
-				json.NewEncoder(w).Encode(response)
-				return
+		response := Response{
+			Status:  "NOK",
+			Message: "Sala de chat inválida, por favor inicie sesión nuevamente. cod:04",
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(response)
+		return
 	}
-	// Llamar al servicio para obtener los mensajes desde el idUltimoMensaje hasta el actual
-	mensajes, err := secMod.GestionSalas.ObtenerMensajesDesdeId(idSalaUUID, requestData.IdUltimoMensaje)
+
+	log.Println("PostListHandler: Llamando al servicio para obtener mensajes desde el IdUltimoMensaje.")
+	idmensaje, err:= uuid.Parse(requestData.IdUltimoMensaje)
 	if err != nil {
-		// Si hubo un error al obtener los mensajes
+		log.Println("PostListHandler: Error al validar el idmensaje:", err)
+		http.Error(w, "idmensaje no es un UUID válido", http.StatusBadRequest)
+		response := Response{
+			Status:  "NOK",
+			Message: "Sala de chat inválida, por favor inicie sesión nuevamente. cod:04",
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+
+	mensajes, err := secMod.GestionSalas.ObtenerMensajesDesdeId(idSalaUUID, idmensaje)
+	if err != nil {
+		log.Println("PostListHandler: Error al obtener los mensajes:", err)
 		response := Response{
 			Status:  "NOK",
 			Message: fmt.Sprintf("Error al obtener los mensajes: %v", err),
@@ -129,6 +150,7 @@ func PostListHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Si no hay mensajes nuevos, devolver solo OK
 	if len(mensajes) == 0 {
+		log.Println("PostListHandler: No hay mensajes nuevos.")
 		response := Response{
 			Status:  "OK",
 			Message: "No hay mensajes nuevos.",
@@ -138,9 +160,13 @@ func PostListHandler(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(response)
 		return
 	}
-	// Convertir a MensajeResponse
+
+	// Convertir los mensajes a la respuesta adecuada
+	log.Println("PostListHandler: Convertiendo mensajes a la estructura de respuesta.")
 	mensajesResponse := ConvertirMensajes(mensajes)
+
 	// Si hay mensajes, devolver la lista con un OK
+	log.Println("PostListHandler: Devolviendo mensajes obtenidos correctamente.")
 	response := Response{
 		Status:  "OK",
 		Message: "Mensajes obtenidos correctamente.",

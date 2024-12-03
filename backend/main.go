@@ -11,7 +11,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-	"github.com/spf13/viper"
+ 
 )
 
 // Para manejar las conexiones WebSocket
@@ -21,24 +21,15 @@ var upgrader = websocket.Upgrader{
 		return true
 	},
 }
-
-func cargarConfiguracion() {
-	// Configurar Viper para cargar el archivo de configuración
-	viper.SetConfigName("config") // Nombre del archivo de configuración (sin extensión)
-	viper.SetConfigType("json")   // Tipo de archivo (en este caso JSON)
-	viper.AddConfigPath(".")      // Directorio donde se encuentra el archivo de configuración
-
-	// Leer el archivo de configuración
-	if err := viper.ReadInConfig(); err != nil {
-		log.Fatalf("Error al leer el archivo de configuración: %s", err)
-	}
-}
+ 
 
 func main() {
-	// Cargar la configuración desde el archivo
-	cargarConfiguracion()
-	// Creamos un nuevo gestor de salas
-	salasManager := &services.GestionSalas{}
+	log.SetFlags(log.Lshortfile)
+	utils.CargarVariablesDeEntorno() 
+	// Creamos un nuevo gestor de salas dentro del singleton que ocntrola lalogica del servidor
+	// Obtener la instancia del singleton
+	secMod := services.GetSecModServidorChat()
+	salasManager := &secMod.GestionSalas
 
 	// Cargamos las salas fijas desde el archivo de configuración
 	err := salasManager.CargarSalasFijasDesdeArchivo("salas_config.json")

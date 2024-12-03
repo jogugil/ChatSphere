@@ -11,5 +11,5 @@ type Persistencia interface {
 	ObtenerSala(id uuid.UUID) (Sala, error)
 	GuardarMensajesEnBaseDeDatos(mensajes []Mensaje) error
 	ObtenerMensajesDesdeSala(idSala uuid.UUID) ([]Mensaje, error)
-	ObtenerMensajesDesdeId(idSala uuid.UUID, idMensaje string) ([]Mensaje, error)
+	ObtenerMensajesDesdeId(idSala uuid.UUID, idMensaje uuid.UUID) ([]Mensaje, error)
 }

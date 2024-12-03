@@ -1,7 +1,7 @@
 package models
 
 import (
-	"fmt"
+ 
 	"time"
 
 	"backend/entities"
@@ -10,9 +10,9 @@ import (
 )
 
 // Crear un nuevo mensaje con los datos proporcionados
-func CrearMensaje(mensajeText string, usuario entities.Usuario, idSala uuid.UUID) *entities.Mensaje {
+func CrearMensaje (mensajeText string, usuario entities.Usuario, idSala uuid.UUID) *entities.Mensaje {
 	return &entities.Mensaje{
-		Id:          generarIDMensaje(), // Función para generar IDs únicos. Generado en el Servidor
+		IDM:         generarIDMensaje(), // Función para generar IDs únicos. Generado en el Servidor
 		Tipo:        entities.Ordinario, // Tipo predeterminado: Ordinario.En esta versión siempre es ordinario
 		FechaEnvio:  time.Now(),         // Fecha del cliente. Se genera en el cleinte antes de enviar el mensaje
 		FechaServer: time.Now(),         // Fecha del servidor. Se genera en el srvidor antes de giardalo en el biffer
@@ -26,7 +26,7 @@ func CrearMensaje(mensajeText string, usuario entities.Usuario, idSala uuid.UUID
 // Crear un nuevo mensaje con datos enviados por el cliente
 func CrearMensajeConFecha(mensajeText string, usuario entities.Usuario, idSala uuid.UUID, fechaEnvio time.Time) *entities.Mensaje {
 	return &entities.Mensaje{
-		Id:          generarIDMensaje(),
+		IDM:          generarIDMensaje(),
 		Tipo:        entities.Ordinario, // Tipo predeterminado: Ordinario
 		FechaEnvio:  fechaEnvio,         // Fecha enviada por el cliente
 		FechaServer: time.Now(),         // Fecha generada por el servidor
@@ -39,6 +39,6 @@ func CrearMensajeConFecha(mensajeText string, usuario entities.Usuario, idSala u
 
 
 // Generador de ID de mensajes
-func generarIDMensaje() string {
-	return fmt.Sprintf("mensj-%s", uuid.New().String())
+func generarIDMensaje() uuid.UUID  {
+	return  uuid.New() 
 }

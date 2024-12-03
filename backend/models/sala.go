@@ -2,8 +2,10 @@ package models
 
 import (
 	"backend/entities"
- 
+
 	"log"
+
+	"github.com/google/uuid"
 )
 
 // Alias del tipo Sala
@@ -40,7 +42,7 @@ func (sala *LocalSala) ObtenerMensajesSala() []entities.Mensaje {
 	}
 	return mensajes
 }
-func (sala *LocalSala) ObtenerMensajesdesdeId(idMensaje string) []entities.Mensaje {
+func (sala *LocalSala) ObtenerMensajesdesdeId(idMensaje uuid.UUID) []entities.Mensaje {
 	mensjes, err := sala.HistoricoMensajes.ObtenerMensajesDesdeId(sala.ID, idMensaje)
 	if err != nil {
 		log.Printf("error al obtener lso mensjaes de la cola circular de la sala %s", sala.Name)
