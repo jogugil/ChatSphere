@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pantalla de Inicio</title>
+  <style>
+    .error-message {
+      color: red;
+      margin-top: 10px;
+      font-size: 1.2rem;
+    }
+  </style>
+</head>
+<body>
+  <div id="inicio">
+    <h1>Bienvenido al Chat</h1>
+    <input type="text" id="nickname" placeholder="Ingresa tu nickname">
+    <button id="conectar">Conectar</button>
+    <div id="error-message" class="error-message"></div> <!-- Aquí se mostrará el mensaje de error -->
+  </div>
+
+  <script>
+    document.getElementById('conectar')?.addEventListener('click', async () => {
+      const nickname = (document.getElementById('nickname') as HTMLInputElement).value;
+      const errorMessageDiv = document.getElementById('error-message');
+      
+      // Limpiar cualquier mensaje de error previo
+      errorMessageDiv.textContent = '';
+
+      try {
+        // Realizar la solicitud al backend para verificar el nickname
+        const response = await fetch('http://localhost:8080/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nickname }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          // Si el nickname es válido, redirigir al chat y pasar los datos necesarios
+          localStorage.setItem('token', data.token);  // Guardamos el token en localStorage
+          localStorage.setItem('roomName', data.roomName);  // Guardamos el nombre de la sala
+          localStorage.setItem('roomId', data.roomId);  // Guardamos el ID de la sala
+          
+          // Redirigir a la pantalla de chat
+          window.location.href = 'pantallaChat.html';
+        } else {
+          // Si hay un error (como nickname en uso), mostrar el mensaje de error
+          errorMessageDiv.textContent = data.message || 'Ocurrió un error. Intenta de nuevo.';
+        }
+      } catch (error) {
+        // En caso de que no se pueda hacer la solicitud
+        errorMessageDiv.textContent = 'No se pudo conectar al servidor. Intenta de nuevo más tarde.';
+      }
+    });
+  </script>
+</body>
+</html>

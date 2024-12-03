@@ -1,0 +1,11 @@
+{
+    "compilerOptions": {
+      "outDir": "./dist",          // Carpeta donde se guardarán los archivos compilados
+      "rootDir": "./public/controler",      // Carpeta de origen del código
+      "target": "ES6",             // Versión de JavaScript a la que se compilará
+      "module": "commonjs",        // Módulo común para Node.js
+      "strict": true               // Habilitar todas las comprobaciones de tipo
+    },
+    "include": ["src/**/*"]         // Incluir todo el código fuente en la carpeta src
+  }
+  
