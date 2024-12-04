@@ -29,7 +29,7 @@ func NuevaMongoPersistencia(uri, dbName string) (*entities.Persistencia, error) 
 		// Configura el cliente MongoDB con un pool de conexiones.
 		client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(uri).SetMaxPoolSize(10)) // Pool con un máximo de 10 conexiones
 		if err != nil {
-			fmt.Println("Error de conexión con MongoDB:", err)
+			fmt.Printf("Error de conexión con MongoDB:%v", err)
 			return
 		}
 		db := client.Database(dbName)

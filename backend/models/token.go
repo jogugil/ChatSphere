@@ -22,7 +22,7 @@ func CrearTokenSesion(nickname string) string {
 	// Obtener la clave secreta desde el entorno
 	secretKey, err := utils.ObtenerVariableDeEntorno("SecretKey")
 	if err != nil {
-		fmt.Println("Error al obtener la clave secreta: ", err)
+		fmt.Printf("Error al obtener la clave secreta: %v", err)
 		return ""
 	}
 

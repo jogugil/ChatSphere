@@ -6,6 +6,6 @@
       "module": "commonjs",        // Módulo común para Node.js
       "strict": true               // Habilitar todas las comprobaciones de tipo
     },
-    "include": ["src/**/*"]         // Incluir todo el código fuente en la carpeta src
-  }
-  
+    "exclude": ["dist"],
+    "include": ["public/**/*"]
+}

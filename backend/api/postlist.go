@@ -20,7 +20,7 @@ type RequestData struct {
 	IdSala          string `json:"idSala"`
 }
 
-type MensajeResponse struct {
+type MessageResponse struct {
 	IdMensaje uuid.UUID `json:"idMensaje"`
 	Nickname  string    `json:"nickname"`
 	Texto     string    `json:"texto"`
@@ -33,15 +33,15 @@ type Response struct {
 	TokenSesion string            `json:"tokenSesion"`
 	Nickname    string            `json:"nickname"`
 	IdSala      string            `json:"idSala"`
-	Data        []MensajeResponse `json:"data,omitempty"` // Lista de mensajes si existen
+	Data        []MessageResponse `json:"data,omitempty"` // Lista de mensajes si existen
 }
 
 // Convertir los mensajes a la estructura de respuesta
-func ConvertirMensajes(mensajes []entities.Mensaje) []MensajeResponse {
+func ConvertirMensajes(mensajes []entities.Mensaje) []MessageResponse {
 	log.Println("ConvertirMensajes: Iniciando conversión de mensajes.")
-	var respuesta []MensajeResponse
+	var respuesta []MessageResponse
 	for _, mensaje := range mensajes {
-		respuesta = append(respuesta, MensajeResponse{
+		respuesta = append(respuesta, MessageResponse{
 			IdMensaje: mensaje.IDM,
 			Nickname:  mensaje.Nickname,
 			Texto:     mensaje.Mensaje,
@@ -66,7 +66,7 @@ func PostListHandler(msg []byte) []byte {
 		err := json.Unmarshal(msg, &requestData)
 		log.Printf("PostListHandler: Datos de solicitud decodificados: %+v\n", requestData)
 		if err != nil {
-			log.Println("PostListHandler: Error al decodificar los datos:", err)
+			log.Printf ("PostListHandler: Error al decodificar los datos: %v", err)
 			// Enviar error por WebSocket
 			respChan <- Response{
 				Status:  "NOK",
@@ -88,7 +88,7 @@ func PostListHandler(msg []byte) []byte {
 		log.Println("PostListHandler: Obteniendo usuario por token de sesión.")
 		user, err := secMod.GestionUsuarios.BuscarUsuarioPorToken(requestData.TokenSesion)
 		if err != nil {
-			log.Println("PostListHandler: Error al buscar el usuario por token:", err)
+			log.Printf ("PostListHandler: Error al buscar el usuario por token: %v", err)
 			respChan <- Response{
 				Status:  "NOK",
 				Message: "Sesión de usuario inválida, por favor inicie sesión nuevamente. cod:01",
@@ -99,7 +99,7 @@ func PostListHandler(msg []byte) []byte {
 		log.Println("PostListHandler: Validando token de sesión.")
 		_, err = models.ValidarTokenSesion(requestData.TokenSesion)
 		if err != nil {
-			log.Println("PostListHandler: Error al validar el token:", err)
+			log.Printf("PostListHandler: Error al validar el token: %v", err)
 			respChan <- Response{
 				Status:  "NOK",
 				Message: "Sesión de usuario inválida, por favor inicie sesión nuevamente. cod:02",
@@ -120,7 +120,7 @@ func PostListHandler(msg []byte) []byte {
 		log.Println("PostListHandler: Validando ID de sala.")
 		idSalaUUID, err := uuid.Parse(requestData.IdSala)
 		if err != nil {
-			log.Println("PostListHandler: Error al validar el IdSala:", err)
+			log.Printf("PostListHandler: Error al validar el IdSala: %v", err)
 			respChan <- Response{
 				Status:  "NOK",
 				Message: "Sala de chat inválida, por favor inicie sesión nuevamente. cod:04",
@@ -131,7 +131,7 @@ func PostListHandler(msg []byte) []byte {
 		log.Println("PostListHandler: Llamando al servicio para obtener mensajes desde el IdUltimoMensaje.")
 		idmensaje, err := uuid.Parse(requestData.IdUltimoMensaje)
 		if err != nil {
-			log.Println("PostListHandler: Error al validar el idmensaje:", err)
+			log.Printf("PostListHandler: Error al validar el idmensaje: %v", err)
 			respChan <- Response{
 				Status:  "NOK",
 				Message: "idmensaje no es un UUID válido",
@@ -141,7 +141,7 @@ func PostListHandler(msg []byte) []byte {
 
 		mensajes, err := secMod.GestionSalas.ObtenerMensajesDesdeId(idSalaUUID, idmensaje)
 		if err != nil {
-			log.Println("PostListHandler: Error al obtener los mensajes:", err)
+			log.Printf("PostListHandler: Error al obtener los mensajes: %v", err)
 			respChan <- Response{
 				Status:  "NOK",
 				Message: fmt.Sprintf("Error al obtener los mensajes: %v", err),
@@ -181,7 +181,7 @@ func PostListHandler(msg []byte) []byte {
 	// Serializar la respuesta a JSON
 	responseJSON, err := json.Marshal(response)
 	if err != nil {
-		log.Println("PostListHandler: Error al serializar la respuesta:", err)
+		log.Printf ("PostListHandler: Error al serializar la respuesta: %v", err)
 		respChan <- Response{
 			Status:  "NOK",
 			Message: "Error interno del servidor. No hay mensajes nuevos.PostListHandler: Error al serializar la respuesta",
@@ -189,7 +189,7 @@ func PostListHandler(msg []byte) []byte {
 		response := <-respChan
 		responseJSON, err := json.Marshal(response)
 		if err != nil {
-			log.Println("PostListHandler: Error al serializar la respuesta:", err)
+			log.Printf ("PostListHandler: Error al serializar la respuesta: %v", err)
 		}
 		return responseJSON
 	}

@@ -56,7 +56,7 @@ func (sm *GestionSalas) CargarSalasFijasDesdeArchivo(configFile string) error {
 	var persis, err = persistence.ObtenerInstanciaDB()
 
 	if err != nil {
-		fmt.Println("Error al crear la instancia de MongoPersistencia:", err)
+		fmt.Printf("Error al crear la instancia de MongoPersistencia:%v", err)
 		return err
 	}
 
@@ -100,7 +100,7 @@ func (sm *GestionSalas) CargarSalasFijasDesdeArchivo(configFile string) error {
 		var persis, err_per = persistence.ObtenerInstanciaDB()
 
 		if err_per != nil {
-			fmt.Println("Error al crear la instancia de MongoPersistencia:", err_per)
+			fmt.Printf("Error al crear la instancia de MongoPersistencia:%v", err_per)
 			return err_per
 		}
 		sala := &entities.Sala{

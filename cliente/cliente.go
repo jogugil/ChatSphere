@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 )
 
@@ -20,14 +21,20 @@ type LoginResponse struct {
 	Namesala string `json:"namesala"`
 }
 
-// Estructura de datos para el mensaje
 type MessageResponse struct {
-	Nickname  string `json:"nickname"`
-	Idsala    string `json:"idsala"`
-	Namesala  string `json:"namesala"`
-	Idmensaje string `json:"idmensaje"`
-	Mensaje   string `json:"mensaje"`
-	De        string `json:"de"`
+	IdMensaje uuid.UUID `json:"idMensaje"`
+	Nickname  string    `json:"nickname"`
+	Texto     string    `json:"texto"`
+}
+
+// Estructura para la respuesta
+type Response struct {
+	Status      string            `json:"status"`
+	Message     string            `json:"message"`
+	TokenSesion string            `json:"tokenSesion"`
+	Nickname    string            `json:"nickname"`
+	IdSala      string            `json:"idSala"`
+	Data        []MessageResponse `json:"data,omitempty"` // Lista de mensajes si existen
 }
 
 func login(nickname string) (LoginResponse, error) {
@@ -125,20 +132,13 @@ func obtenerMensajes(conn *websocket.Conn, nickname, idsala, token, ultimoIdMens
 	}
 
 	// Verificar si la respuesta es un objeto único o un array de mensajes
-	var mensajeIndividual MessageResponse
+	var mensajeIndividual Response
 	err = json.Unmarshal(msg, &mensajeIndividual)
-	if err == nil {
+	if err != nil {
 		// Si no hubo error al deserializar como mensaje individual, lo empaquetamos en un slice
-		return []MessageResponse{mensajeIndividual}, nil
+		return nil, fmt.Errorf("error al deserializar la respuesta lista de mensajes nuevos: %v", err)
 	}
-
-	// Intentar decodificar como un arreglo de mensajes
-	var mensajes []MessageResponse
-	if err := json.Unmarshal(msg, &mensajes); err != nil {
-		return nil, fmt.Errorf("error al deserializar la respuesta: %v", err)
-	}
-
-	return mensajes, nil
+	return mensajeIndividual.Data, nil
 }
 
 func main() {
@@ -167,12 +167,10 @@ func main() {
 	mensajes, err := obtenerMensajes(conn, loginResp.Nickname, loginResp.Idsala, loginResp.Token, "00000000-0000-0000-0000-000000000000")
 	if err != nil {
 		log.Fatalf("Error al obtener mensajes: %v", err)
-	}
-
-	// Imprimir los mensajes recibidos
-	fmt.Println("Mensajes recibidos:")
-	for _, mensaje := range mensajes {
-		fmt.Printf("ID Mensaje: %s, Mensaje: %s, Enviado por: %s\n", mensaje.Idmensaje, mensaje.Mensaje, mensaje.De)
+	} else {
+		// Imprimir los mensajes recibidos
+		fmt.Println("Mensajes recibidos 1:")
+		MostrarMensajes(mensajes)
 	}
 
 	// Ahora enviamos otro mensaje e intentamos recuperarlo
@@ -186,14 +184,29 @@ func main() {
 	fmt.Println("Segundo mensaje enviado correctamente")
 
 	// Intentamos recuperar la lista de mensajes nuevos (el segundo mensaje enviado)
-	mensajes1, err := obtenerMensajes(conn, loginResp.Nickname, loginResp.Idsala, loginResp.Token, "00000000-0000-0000-0000-000000000000")
-	if err != nil {
-		log.Fatalf("Error al obtener mensajes: %v", err)
+	mensajes, err_m2 := obtenerMensajes(conn, loginResp.Nickname, loginResp.Idsala, loginResp.Token, "00000000-0000-0000-0000-000000000000")
+	if err_m2 != nil {
+		log.Fatalf("Error al obtener mensajes: %v", err_m2)
+	} else {
+		// Imprimir los mensajes recibidos
+		fmt.Println("Mensajes recibidos 2:")
+		MostrarMensajes(mensajes)
 	}
-	// Imprimir los mensajes recibidos
-	fmt.Println("Mensajes recibidos:")
-	for _, mensaje := range mensajes1 {
-		fmt.Printf("ID Mensaje: %s, Mensaje: %s, Enviado por: %s\n", mensaje.Idmensaje, mensaje.Mensaje, mensaje.De)
+	defer func() {
+		if err := conn.Close(); err != nil {
+			log.Printf("error al cerrar la conexión WebSocket Cliente: %v", err)
+		} else {
+			log.Println("Conexión WebSocket Cliente cerrada correctamente")
+		}
+	}()
+}
+
+// Función para mostrar los elementos
+func MostrarMensajes(mensajes []MessageResponse) {
+	for i, mensaje := range mensajes {
+		fmt.Printf("Mensaje %d:\n", i+1)
+		fmt.Printf("  ID: %s\n", mensaje.IdMensaje.String())
+		fmt.Printf("  Nickname: %s\n", mensaje.Nickname)
+		fmt.Printf("  Texto: %s\n", mensaje.Texto)
 	}
-	defer conn.Close()
 }

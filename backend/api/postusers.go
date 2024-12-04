@@ -75,7 +75,7 @@ func PostUsersHandler(msg []byte) []byte {
 		log.Println("PostUsersHandler: Validando token de sesión.")
 		_, err = models.ValidarTokenSesion(requestData.TokenSesion)
 		if err != nil {
-			log.Println("PostUsersHandler: Error al validar el token:", err)
+			log.Printf("PostUsersHandler: Error al validar el token: %v", err)
 			respChan <- Response{
 				Status:  "NOK",
 				Message: "Sesión de usuario inválida, por favor inicie sesión nuevamente.",
@@ -125,7 +125,7 @@ func PostUsersHandler(msg []byte) []byte {
 	// Serializar la respuesta a JSON
 	responseJSON, err := json.Marshal(response)
 	if err != nil {
-		log.Println("PostListHandler: Error al serializar la respuesta:", err)
+		log.Printf("PostListHandler: Error al serializar la respuesta:%v", err)
 		respChan <- Response{
 			Status:  "NOK",
 			Message: "Error interno del servidor. No hay mensajes nuevos.PostListHandler: Error al serializar la respuesta",
@@ -133,7 +133,7 @@ func PostUsersHandler(msg []byte) []byte {
 		response := <-respChan
 		responseJSON, err := json.Marshal(response)
 		if err != nil {
-			log.Println("PostListHandler: Error al serializar la respuesta:", err)
+			log.Printf("PostListHandler: Error al serializar la respuesta:%v", err)
 		}
 		return responseJSON
 	}

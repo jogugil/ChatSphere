@@ -21,7 +21,7 @@ func LoginHandler(c *gin.Context) {
 	// Decodificar los datos JSON de la solicitud
 	if err := c.ShouldBindJSON(&requestData); err != nil {
 		// Log de error en la decodificación de datos
-		fmt.Println("Error al decodificar el JSON de la solicitud:", err)
+		fmt.Printf("Error al decodificar el JSON de la solicitud: %v", err)
 
 		// Si hay un error en el body de la solicitud, devolver un error HTTP 400
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -50,7 +50,7 @@ func LoginHandler(c *gin.Context) {
 	usuario, err := secMod.EjecutarLogin(requestData.Nickname)
 	if err != nil {
 		// Log del error en el proceso de login
-		fmt.Println("Error al ejecutar login para el usuario:", err)
+		fmt.Printf("Error al ejecutar login para el usuario: %v", err)
 
 		// Si hay un error al hacer login, devolver el error con status 400
 		c.JSON(http.StatusBadRequest, gin.H{

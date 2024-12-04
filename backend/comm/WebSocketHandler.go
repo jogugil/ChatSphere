@@ -35,14 +35,14 @@ func WebSocketHandler(c *gin.Context) {
 	for {
 		_, msg, err := conn.ReadMessage()
 		if err != nil {
-			log.Println("Error al leer mensaje WebSocket:", err)
+			log.Printf("Error al leer mensaje WebSocket:%v", err)
 			break
 		}
 
 		var data map[string]string
 		err = json.Unmarshal(msg, &data)
 		if err != nil {
-			log.Println("Error al deserializar el mensaje:", err)
+			log.Printf("Error al deserializar el mensaje:%v", err)
 			msgr, _ := json.Marshal(`{"status": "error", "message": "Error al deserializar el mensaje"}`)
 			conn.WriteMessage(websocket.TextMessage, msgr)
 			continue
@@ -96,7 +96,7 @@ func callheatHandler(msg []byte) []byte {
 	// Si todo va bien, se establece el código de estado 202 y se envía la respuesta
 	errorJSON, err := json.Marshal(`{"status": "OK", "message": "Request accepted for processing"}`)
 	if err != nil {
-		log.Println("sendErrorResponse: Error al serializar el mensaje de error:", err)
+		log.Printf ("sendErrorResponse: Error al serializar el mensaje de error:%v", err)
 		return errorJSON
 	}
 	return errorJSON
