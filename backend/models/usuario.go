@@ -1,12 +1,14 @@
 package models
 
 import (
-	"backend/types" // Importamos el paquete interfaces
 	"backend/entities"
+	"backend/types" // Importamos el paquete interfaces
+	"log"
 	"time"
 
 	"github.com/google/uuid" // Creación de uuid's únicos
 )
+
 // Alias del tipo Usuario
 type LocalUsuario entities.Usuario
 
@@ -27,11 +29,15 @@ func (u *LocalUsuario) ActualizarEstado() {
 }
 
 func (u *LocalUsuario) UnirseASala(sala *entities.Sala) {
-	u.Sala = sala
+	u.IdSala = sala.ID
 }
 
 func (u *LocalUsuario) SalirDeSala() {
-	u.Sala = nil // Ahora se elimina la referencia a la sala
+	idsala, err := uuid.Parse("00000000-0000-0000-0000-000000000000")
+	if err !=nil {
+		log.Printf("error a poner nil una sla del usuario: %v",err)
+	}
+	u.IdSala = idsala // Ahora se elimina la referencia a la sala
 }
 
 func NewUsuarioGo(nickname string, sala *entities.Sala) *entities.Usuario {
@@ -42,6 +48,7 @@ func NewUsuarioGo(nickname string, sala *entities.Sala) *entities.Usuario {
 		Tipo:             "usuariochat",
 		HoraUltimaAccion: time.Now(),
 		Estado:           types.Activo,
-		Sala:             sala, // Se pasa la referencia de la sala
+		IdSala:           sala.ID,
+		NameSala:         sala.Name,
 	}
 }

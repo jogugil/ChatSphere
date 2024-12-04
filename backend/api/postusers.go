@@ -49,7 +49,7 @@ func PostUsersHandler(msg []byte) []byte {
 		}
 		log.Printf("PostListHandler: Datos de solicitud decodificados: %+v\n", requestData)
 		// Obtener la instancia del singleton
-		secMod,err  := services.GetSecModServidorChat()
+		secMod, err := services.GetSecModServidorChat()
 		if err != nil {
 			// Si el IdSala no es un UUID válido, devolver un error
 			log.Printf("Error al obtener el servidor chat. : %v", err)
@@ -84,8 +84,8 @@ func PostUsersHandler(msg []byte) []byte {
 		}
 
 		// Obtener usuarios activos
-		usuarios, err := secMod.GestionUsuarios.ObtenerUsuariosActivos(idSala)
-		if err != nil {
+		usuarios := secMod.GestionUsuarios.ObtenerUsuariosActivos()
+		if usuarios == nil {
 			log.Printf("Error al obtener usuarios activos: %v", err)
 
 			respChan <- Response{

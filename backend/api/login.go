@@ -35,7 +35,7 @@ func LoginHandler(c *gin.Context) {
 	fmt.Println("Datos recibidos de la solicitud:", requestData)
 
 	// Obtener la instancia del singleton
-	secMod,err := services.GetSecModServidorChat ()
+	secMod, err := services.GetSecModServidorChat()
 	if err != nil {
 		// Si el IdSala no es un UUID válido, devolver un error
 		log.Printf("Error al obtener el servidor chat. : %v", err)
@@ -62,15 +62,16 @@ func LoginHandler(c *gin.Context) {
 
 	// Log de los datos del usuario después del login
 	fmt.Printf("Login exitoso. Datos del usuario: Token: %s, Nickname: %s, Sala ID: %v, Sala Name: %s\n",
-		usuario.Token, usuario.Nickname, usuario.Sala.ID, usuario.Sala.Name)
+		usuario.Token, usuario.Nickname, usuario.IdSala , usuario.NameSala)
 
 	// Responder con un JSON de éxito si el login es exitoso
 	responseData := gin.H{
 		"status":   "ok",
+		"message":  "login realizado",
 		"token":    usuario.Token,
 		"nickname": usuario.Nickname,
-		"idsala":   usuario.Sala.ID,   // Sala por defecto
-		"namesala": usuario.Sala.Name, // Nombre de la sala
+		"idsala":   usuario.IdSala,   // Sala por defecto
+		"namesala": usuario.NameSala, // Nombre de la sala
 	}
 
 	// Log de la respuesta enviada

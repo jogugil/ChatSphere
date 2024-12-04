@@ -9,13 +9,11 @@ import (
 	"fmt"
 	"log"
 	"sync"
-
-	"github.com/google/uuid"
 )
 
 type GestionUsuarios struct {
 	Usuarios []*entities.Usuario // Lista de usuarios
-	once     sync.Once            // Para garantizar la inicialización única de la instancia
+	onceUser sync.Once           // Para garantizar la inicialización única de la instancia
 }
 
 var instanciaUser *GestionUsuarios // Instancia única de GestionUsuarios
@@ -29,7 +27,7 @@ func NuevaGestionUsuarios() *GestionUsuarios {
 		}
 	}
 	// Usamos once.Do para asegurarnos que la configuración solo se realice una vez
-	instanciaUser.once.Do(func() {
+	instanciaUser.onceUser.Do(func() {
 		log.Println("NuevaGestionUsuarios: Inicializando la instancia de Gestión de Usuarios.")
 		// Aquí podrías cargar los usuarios desde una base de datos o archivo si es necesario
 		// Ejemplo de carga de usuarios (esto depende de tu implementación y necesidades)
@@ -107,28 +105,15 @@ func (gestion *GestionUsuarios) RegistrarUsuario(nickname string, token string, 
 	return nuevoUsuario, nil
 }
 
-func (gestion *GestionUsuarios) ObtenerUsuariosActivos(idSala uuid.UUID) ([]*entities.Usuario, error) {
-	fmt.Println("Obteniendo usuarios activos para la sala:", idSala)
-
-	// Lista para almacenar los usuarios activos
+// Pra otras versiones pasar el uuid de la sala y devolver lso usuarios presentes en dicha sala
+// El objeto slaa tiene el lisado de usuarios activos en la sala
+// Método ObtenerUsuariosActivos que devuelve una lista de usuarios activos
+func (g *GestionUsuarios) ObtenerUsuariosActivos() []*entities.Usuario {
 	var usuariosActivos []*entities.Usuario
-
-	// Iterar sobre la lista de usuarios en memoria
-	for _, usuario := range gestion.Usuarios {
-		// Verificar si el usuario está activo y pertenece a la sala especificada
-		if usuario.Estado == types.Activo && usuario.Sala != nil && usuario.Sala.ID == idSala {
-			fmt.Println("Usuario activo encontrado:", usuario.Nickname)
+	for _, usuario := range g.Usuarios {
+		if usuario.Estado == types.Activo {
 			usuariosActivos = append(usuariosActivos, usuario)
 		}
 	}
-
-	// Retornar error si no se encuentran usuarios activos
-	if len(usuariosActivos) == 0 {
-		fmt.Println("No se encontraron usuarios activos en la sala:", idSala)
-		return nil, fmt.Errorf("no se encontraron usuarios activos en la sala con ID %s", idSala)
-	}
-
-	// Retornar la lista de usuarios activos
-	fmt.Println("Usuarios activos encontrados:", len(usuariosActivos))
-	return usuariosActivos, nil
+	return usuariosActivos
 }

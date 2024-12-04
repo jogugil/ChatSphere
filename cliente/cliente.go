@@ -1,11 +1,13 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/google/uuid"
@@ -15,6 +17,7 @@ import (
 // Estructura de datos para el login
 type LoginResponse struct {
 	Status   string `json:"status"`
+	Message  string `json:"message"`
 	Token    string `json:"token"`
 	Nickname string `json:"nickname"`
 	Idsala   string `json:"idsala"`
@@ -62,10 +65,10 @@ func login(nickname string) (LoginResponse, error) {
 	return loginResponse, nil
 }
 
-func enviarMensaje(token, idsala, mensaje string) error {
+func enviarMensaje(token, idsala, nickName, mensaje string) error {
 	// Crear los datos para el mensaje
 	data := map[string]string{
-		"nickname":     "usuarioEjemplo", // Cambiar por el nickname
+		"nickname":     nickName, // Cambiar por el nickname
 		"idsala":       idsala,
 		"namesala":     "SalaEjemplo", // Cambiar por el nombre de la sala
 		"tokensession": token,
@@ -140,18 +143,31 @@ func obtenerMensajes(conn *websocket.Conn, nickname, idsala, token, ultimoIdMens
 	}
 	return mensajeIndividual.Data, nil
 }
-
 func main() {
+	// Solicitar el nickname al usuario
+	fmt.Print("Introduce tu nickname: ")
+	var nickname string
+	fmt.Scanln(&nickname)
+
 	// Realizar login
-	loginResp, err := login("usuarioEjemplo")
+	loginResp, err := login(nickname)
 	if err != nil {
 		log.Fatalf("Error en el login: %v", err)
 	}
+	fmt.Printf("LloginResp.status: %s \n", loginResp.Status)
+	fmt.Printf("LloginResp.Message: %s \n", loginResp.Message)
 	fmt.Printf("Login exitoso! Token: %s, Sala: %s\n", loginResp.Token, loginResp.Namesala)
 	fmt.Printf("LloginResp.Idsala: %s \n", loginResp.Idsala)
 
-	// Enviar un mensaje
-	err = enviarMensaje(loginResp.Token, loginResp.Idsala, "Hola, este es un mensaje de prueba.")
+	// Pedir el primer mensaje
+	fmt.Print("Introduce el mensaje a enviar: ")
+	var mensaje string
+	scanner := bufio.NewScanner(os.Stdin)
+	scanner.Scan()
+	mensaje = scanner.Text()
+
+	// Enviar el primer mensaje
+	err = enviarMensaje(loginResp.Token, loginResp.Idsala, loginResp.Nickname, mensaje)
 	if err != nil {
 		log.Fatalf("Error al enviar el mensaje: %v", err)
 	}
@@ -176,8 +192,13 @@ func main() {
 	// Ahora enviamos otro mensaje e intentamos recuperarlo
 	time.Sleep(2 * time.Second) // Espera 2 segundos antes de cerrar
 
-	// Enviar un segundo mensaje
-	err = enviarMensaje(loginResp.Token, loginResp.Idsala, "Hola, este es un segundo mensaje de prueba.")
+	// Pedir el segundo mensaje
+	fmt.Print("Introduce el segundo mensaje a enviar: ")
+	scanner.Scan()
+	mensaje2 := scanner.Text()
+
+	// Enviar el segundo mensaje
+	err = enviarMensaje(loginResp.Token,  loginResp.Idsala, loginResp.Nickname, mensaje2)
 	if err != nil {
 		log.Fatalf("Error al enviar el mensaje: %v", err)
 	}
@@ -192,6 +213,7 @@ func main() {
 		fmt.Println("Mensajes recibidos 2:")
 		MostrarMensajes(mensajes)
 	}
+
 	defer func() {
 		if err := conn.Close(); err != nil {
 			log.Printf("error al cerrar la conexión WebSocket Cliente: %v", err)

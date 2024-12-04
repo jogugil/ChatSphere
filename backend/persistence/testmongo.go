@@ -1,0 +1,116 @@
+package persistence
+
+import (
+	"fmt"
+	"log"
+	"time"
+
+	"backend/entities"
+	"backend/types"
+
+	"github.com/google/uuid"
+)
+
+func TestTuFuncionMongoDB() {
+	// Simulando una instancia de MongoPersistencia
+	uri := "mongodb://localhost:27017" // Cambia esto según tu URI de MongoDB
+	dbName := "chatDB"
+	persistencia, err := NuevaMongoPersistencia(uri, dbName)
+	if err != nil {
+		log.Fatalf("Error al crear la instancia de persistencia: %v", err)
+	}
+	idsala, err := uuid.Parse("10000000-0000-0000-0000-000000000010") //ponemos  un id de sala
+	if err != nil {
+		log.Printf("error a poner nil una sla del usuario: %v", err)
+	}
+	// Crear un usuario de prueba
+	usuario := &entities.Usuario{
+		IdUsuario:        uuid.New().String(),
+		Nickname:         "usuario_test",
+		Token:            "token_123",
+		HoraUltimaAccion: time.Now(),
+		Estado:           types.Activo,
+		Tipo:             "regular",
+		IdSala:           idsala, // Suponiendo que puede ser nil
+		NameSala:         "SalaId",
+	}
+
+	// 1. Test de GuardarUsuario
+	fmt.Println("Iniciando prueba de GuardarUsuario...")
+	startTime := time.Now()
+	err = (*persistencia).GuardarUsuario(usuario)
+	duration := time.Since(startTime)
+	if err != nil {
+		fmt.Printf("Error en GuardarUsuario: %v\n", err)
+	} else {
+		fmt.Printf("GuardarUsuario completado en %v\n", duration)
+	}
+
+	// 2. Test de GuardarSala
+	sala := entities.Sala{
+		ID:   uuid.New(),
+		Name: "SalaTest",
+	}
+	fmt.Println("Iniciando prueba de GuardarSala...")
+	startTime = time.Now()
+	err = (*persistencia).GuardarSala(sala)
+	duration = time.Since(startTime)
+	if err != nil {
+		fmt.Printf("Error en GuardarSala: %v\n", err)
+	} else {
+		fmt.Printf("GuardarSala completado en %v\n", duration)
+	}
+
+	// 3. Test de ObtenerSala
+	fmt.Println("Iniciando prueba de ObtenerSala...")
+	startTime = time.Now()
+	_, err = (*persistencia).ObtenerSala(sala.ID)
+	duration = time.Since(startTime)
+	if err != nil {
+		fmt.Printf("Error en ObtenerSala: %v\n", err)
+	} else {
+		fmt.Printf("ObtenerSala completado en %v\n", duration)
+	}
+
+	// 4. Test de GuardarMensaje
+	mensaje := &entities.Mensaje{
+		IDM:        uuid.New(),
+		Nickname:   "usuario_test",
+		FechaEnvio: time.Now(),
+		IdSala:     sala.ID,
+		NombreSala: sala.Name,
+		Token:      "token_123",
+		Mensaje:    "Este es un mensaje de prueba",
+	}
+	fmt.Println("Iniciando prueba de GuardarMensaje...")
+	startTime = time.Now()
+	err = (*persistencia).GuardarMensaje(mensaje)
+	duration = time.Since(startTime)
+	if err != nil {
+		fmt.Printf("Error en GuardarMensaje: %v\n", err)
+	} else {
+		fmt.Printf("GuardarMensaje completado en %v\n", duration)
+	}
+
+	// 5. Test de ObtenerMensajesDesdeSala
+	fmt.Println("Iniciando prueba de ObtenerMensajesDesdeSala...")
+	startTime = time.Now()
+	_, err = (*persistencia).ObtenerMensajesDesdeSala(sala.ID)
+	duration = time.Since(startTime)
+	if err != nil {
+		fmt.Printf("Error en ObtenerMensajesDesdeSala: %v\n", err)
+	} else {
+		fmt.Printf("ObtenerMensajesDesdeSala completado en %v\n", duration)
+	}
+
+	// 6. Test de ObtenerMensajesDesdeId
+	fmt.Println("Iniciando prueba de ObtenerMensajesDesdeId...")
+	startTime = time.Now()
+	_, err = (*persistencia).ObtenerMensajesDesdeId(sala.ID, mensaje.IDM)
+	duration = time.Since(startTime)
+	if err != nil {
+		fmt.Printf("Error en ObtenerMensajesDesdeId: %v\n", err)
+	} else {
+		fmt.Printf("ObtenerMensajesDesdeId completado en %v\n", duration)
+	}
+}

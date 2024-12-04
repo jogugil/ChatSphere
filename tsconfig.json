@@ -1,11 +1,11 @@
 {
-    "compilerOptions": {
-      "outDir": "./dist",          // Carpeta donde se guardarán los archivos compilados
-      "rootDir": "./public/controler",      // Carpeta de origen del código
-      "target": "ES6",             // Versión de JavaScript a la que se compilará
-      "module": "commonjs",        // Módulo común para Node.js
-      "strict": true               // Habilitar todas las comprobaciones de tipo
-    },
-    "exclude": ["dist"],
-    "include": ["public/**/*"]
+  "compilerOptions": {
+    "outDir": "./dist",          // Carpeta donde se guardarán los archivos compilados
+    "rootDir": "./web/public",   // Establecer la carpeta raíz de los archivos fuente
+    "target": "ES6",             // Versión de JavaScript a la que se compilará
+    "module": "commonjs",        // Módulo común para Node.js
+    "strict": true               // Habilitar todas las comprobaciones de tipo
+  },
+  "exclude": ["dist"],           // Excluir la carpeta dist de la compilación
+  "include": ["web/public/**/*"] // Incluir todos los archivos .ts dentro de public
 }

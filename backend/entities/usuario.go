@@ -3,6 +3,8 @@ package entities
 import (
 	"backend/types" // Importamos el paquete interfaces
 	"time"
+
+	"github.com/google/uuid"
 	// Creación de uuid's únicos
 )
 
@@ -13,5 +15,6 @@ type Usuario struct {
 	HoraUltimaAccion time.Time
 	Estado           types.EstadoUsuario
 	Tipo             string
-	Sala             *Sala // Cambié esto para que Sala sea una referencia a un objeto Sala
+	IdSala           uuid.UUID
+	NameSala         string
 }
