@@ -3,6 +3,7 @@ package main
 import (
 	"backend/api"
 	"backend/comm"
+	"backend/persistence"
 	"backend/services"
 	"backend/utils"
 	"fmt"
@@ -11,7 +12,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
- 
 )
 
 // Para manejar las conexiones WebSocket
@@ -21,21 +21,30 @@ var upgrader = websocket.Upgrader{
 		return true
 	},
 }
- 
 
 func main() {
 	log.SetFlags(log.Lshortfile)
-	utils.CargarVariablesDeEntorno() 
+	utils.CargarVariablesDeEntorno()
 	// Creamos un nuevo gestor de salas dentro del singleton que ocntrola lalogica del servidor
 	// Obtener la instancia del singleton
-	secMod := services.GetSecModServidorChat()
-	salasManager := &secMod.GestionSalas
+	uriMongo, err := utils.ObtenerVariableDeEntorno("URIMongo")
 
-	// Cargamos las salas fijas desde el archivo de configuración
-	err := salasManager.CargarSalasFijasDesdeArchivo("salas_config.json")
 	if err != nil {
-		log.Fatalf("Error al cargar las salas: %v", err)
+		log.Fatalf("Error al iniciar el servidor de BD.  URIMongo no configurado: %v", err)
+		uriMongo = "mongodb://localhost:27017" // Valor por defecto si no se configura
 	}
+	nameMongo, err := utils.ObtenerVariableDeEntorno("SizeQueue")
+	if err != nil {
+		log.Fatalf("Error al iniciar el servidor. Nombre del servidor no configurado: %v", err)
+		nameMongo = "MongoChat" // Valor por defecto si no se configura
+	}
+	persistencia, err := persistence.NuevaMongoPersistencia(uriMongo, nameMongo)
+	if err != nil {
+		log.Fatalf("Error al iniciar el servidor de BAse de datos. Pool de conexiones fallida: %v", err)
+		return
+	}
+	secMod := services.CrearSecModServidorChat(persistencia, "salas_config.json")
+	salasManager := secMod.GestionSalas
 
 	// Imprimimos la sala principal
 	fmt.Printf("Sala Principal: %s, ID: %s\n", salasManager.SalaPrincipal.Name, salasManager.SalaPrincipal.ID)

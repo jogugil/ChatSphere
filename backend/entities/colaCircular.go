@@ -11,17 +11,17 @@ import (
 )
 
 type ColaCircular struct {
-	Buffer       []Mensaje    // Buffer circular de mensajes
-	Head         int          // Índice del primer mensaje
-	Tail         int          // Índice del siguiente espacio disponible
-	Size         int          // Número actual de mensajes en la cola
-	Capacity     int          // Capacidad máxima de la cola (se lee desde el archivo .env)
-	Mu           sync.Mutex   // Mutex para la exclusión mutua
-	Persistencia Persistencia // Para almacenar en la BD mongoDB
+	buffer       []Mensaje     // Buffer circular de mensajes
+	head         int           // Índice del primer mensaje
+	tail         int           // Índice del siguiente espacio disponible
+	size         int           // Número actual de mensajes en la cola
+	capacity     int           // Capacidad máxima de la cola (se lee desde el archivo .env)
+	mu           sync.Mutex    // Mutex para la exclusión mutua
+	persistencia *Persistencia // Para almacenar en la BD mongoDB
 }
 
 // NuevaColaCircular crea una nueva instancia de ColaCircular
-func NuevaColaCircular(persistencia Persistencia) *ColaCircular {
+func NuevaColaCircular(persistence *Persistencia) *ColaCircular {
 	// Leer el tamaño máximo de la cola desde las variables de entorno
 	val, err_env := utils.ObtenerVariableDeEntorno("SizeQueue")
 	if err_env != nil {
@@ -34,29 +34,29 @@ func NuevaColaCircular(persistencia Persistencia) *ColaCircular {
 
 	// Crear la cola con la capacidad configurada
 	return &ColaCircular{
-		Buffer:       make([]Mensaje, capacity),
-		Head:         0,
-		Tail:         0,
-		Size:         0,
-		Capacity:     capacity,
-		Persistencia: persistencia,
+		buffer:       make([]Mensaje, capacity),
+		head:         0,
+		tail:         0,
+		size:         0,
+		capacity:     capacity,
+		persistencia: persistence,
 	}
 }
 
 // Enqueue agrega un mensaje a la cola
 func (q *ColaCircular) Enqueue(msg Mensaje) {
-	q.Mu.Lock()
-	defer q.Mu.Unlock()
+	q.mu.Lock()
+	defer q.mu.Unlock()
 
 	// Si la cola está llena, vacía los mensajes antes de agregar uno nuevo
-	if q.Size == q.Capacity {
+	if q.size == q.capacity {
 		log.Println("La cola está llena, procesando y vaciando en la base de datos.")
 		q.flushToDatabase()
 	}
 
-	q.Buffer[q.Tail] = msg
-	q.Tail = (q.Tail + 1) % q.Capacity
-	q.Size++
+	q.buffer[q.tail] = msg
+	q.tail = (q.tail + 1) % q.capacity
+	q.size++
 
 	log.Printf("Mensaje añadido a la cola: %v", msg)
 }
@@ -65,26 +65,26 @@ func (q *ColaCircular) Enqueue(msg Mensaje) {
 func (q *ColaCircular) flushToDatabase() {
 	// Proceso de vaciado a base de datos
 	var mensajes []Mensaje
-	for i := 0; i < q.Size; i++ {
-		mensajes = append(mensajes, q.Buffer[(q.Head+i)%q.Capacity])
+	for i := 0; i < q.size; i++ {
+		mensajes = append(mensajes, q.buffer[(q.head+i)%q.capacity])
 	}
 	// Guardar mensajes en la base de datos
-	err := q.Persistencia.GuardarMensajesEnBaseDeDatos(mensajes)
+	err := (*q.persistencia).GuardarMensajesEnBaseDeDatos(mensajes)
 	if err != nil {
 		log.Printf("Error al guardar los mensajes: %v", err)
 		return
 	}
-	q.Size = 0 // Ahora que se vació la cola, podemos resetear el tamaño
+	q.size = 0 // Ahora que se vació la cola, podemos resetear el tamaño
 }
 
 // ObtenerMensajes obtiene hasta 'cantidad' de mensajes de la cola circular sin eliminarlos.
 func (q *ColaCircular) ObtenerMensajes(idSala uuid.UUID, cantidad int) ([]Mensaje, error) {
-	q.Mu.Lock()
-	defer q.Mu.Unlock()
+	q.mu.Lock()
+	defer q.mu.Unlock()
 
 	// Si la cola está vacía, retornamos un error
-	if q.Size == 0 {
-		mensajes, err := q.Persistencia.ObtenerMensajesDesdeSala(idSala)
+	if q.size == 0 {
+		mensajes, err := (*q.persistencia).ObtenerMensajesDesdeSala(idSala)
 		if err != nil {
 			return nil, fmt.Errorf("la cola está vacía")
 		}
@@ -92,15 +92,15 @@ func (q *ColaCircular) ObtenerMensajes(idSala uuid.UUID, cantidad int) ([]Mensaj
 	}
 
 	// Si la cantidad solicitada es mayor que el tamaño de la cola, ajustamos la cantidad
-	if cantidad > q.Size {
-		cantidad = q.Size
+	if cantidad > q.size {
+		cantidad = q.size
 	}
 
 	// Creamos un slice para los mensajes a devolver
 	var mensajes []Mensaje
 	for i := 0; i < cantidad; i++ {
 		// Calculamos el índice en el buffer circular
-		mensaje := q.Buffer[(q.Head+i)%q.Capacity]
+		mensaje := q.buffer[(q.head+i)%q.capacity]
 		mensajes = append(mensajes, mensaje)
 	}
 
@@ -110,12 +110,12 @@ func (q *ColaCircular) ObtenerMensajes(idSala uuid.UUID, cantidad int) ([]Mensaj
 
 // ObtenerTodos obtiene todos los mensajes de la cola circular sin eliminarlos.
 func (q *ColaCircular) ObtenerTodos(idSala uuid.UUID) ([]Mensaje, error) {
-	q.Mu.Lock()
-	defer q.Mu.Unlock()
+	q.mu.Lock()
+	defer q.mu.Unlock()
 
 	// Si la cola está vacía, retornamos un error
-	if q.Size == 0 {
-		mensajes, err := q.Persistencia.ObtenerMensajesDesdeSala(idSala)
+	if q.size == 0 {
+		mensajes, err := (*q.persistencia).ObtenerMensajesDesdeSala(idSala)
 		if err != nil {
 			return nil, fmt.Errorf("la cola está vacía y hay un error en la BD")
 		}
@@ -126,9 +126,9 @@ func (q *ColaCircular) ObtenerTodos(idSala uuid.UUID) ([]Mensaje, error) {
 	var mensajes []Mensaje
 
 	// Recorremos todos los mensajes en la cola circular
-	for i := 0; i < q.Size; i++ {
+	for i := 0; i < q.size; i++ {
 		// Calculamos el índice en el buffer circular
-		mensaje := q.Buffer[(q.Head+i)%q.Capacity]
+		mensaje := q.buffer[(q.head+i)%q.capacity]
 		mensajes = append(mensajes, mensaje)
 	}
 
@@ -138,64 +138,144 @@ func (q *ColaCircular) ObtenerTodos(idSala uuid.UUID) ([]Mensaje, error) {
 
 // ObtenerMensajesDesdeId obtiene mensajes desde un id específico.
 func (q *ColaCircular) ObtenerMensajesDesdeId(idSala uuid.UUID, idMensaje uuid.UUID) ([]Mensaje, error) {
-	q.Mu.Lock()
-	defer q.Mu.Unlock()
+	// Log para ver qué parámetros entran en la función
+	fmt.Printf("ObtenerMensajesDesdeId - Parámetros de entrada: idSala=%s, idMensaje=%s\n", idSala, idMensaje)
 
-	// Si la cola está vacía, retornamos un error
-	if q.Size == 0 {
-		return nil, fmt.Errorf("la cola está vacía")
+	q.mu.Lock()
+	defer q.mu.Unlock()
+
+	// Si la cola está vacía, intentamos obtener mensajes desde la persistencia
+	if q.size == 0 {
+		return q.obtenerMensajesDesdePersistencia(idSala, idMensaje)
 	}
 
-	// Buscamos el índice del mensaje con el id dado
-	var index int = -1
-	for i := 0; i < q.Size; i++ {
-		mensaje := q.Buffer[(q.Head+i)%q.Capacity]
-		if  mensaje.IDM == idMensaje { // Asumimos que `Mensaje` tiene un campo `ID`
-			index = (q.Head + i) % q.Capacity
-			break
-		}
+	// Si idMensaje es uuid.Nil, devolver todos los mensajes de la cola
+	if idMensaje == uuid.Nil {
+		return q.obtenerTodosLosMensajes()
 	}
 
-	// Si no encontramos el mensaje, devolvemos un error
-	// Ojo! el mensaje puede estar volcado en la BD mongoDB
-	if index == -1 {
-		mensajes, err := q.Persistencia.ObtenerMensajesDesdeId(idSala, idMensaje)
-		if err != nil {
-			return nil, fmt.Errorf("mensaje con id %s no encontrado", idMensaje)
-		}
-		return mensajes, nil
+	// Buscar el mensaje en la cola circular
+	mensaje, index, err := q.buscarMensajeEnCola(idMensaje)
+	if err != nil {
+		// Si no lo encontramos, intentar obtenerlo desde la persistencia
+		return q.obtenerMensajeDesdePersistencia(idSala, idMensaje)
 	}
 
-	// Creamos un slice para los mensajes a devolver
+	// Recopilar los mensajes desde el índice encontrado hasta el final de la cola
+	return q.recopilarMensajesDesdeIndice(index, mensaje)
+}
+
+// Función para obtener mensajes desde la persistencia
+func (q *ColaCircular) obtenerMensajesDesdePersistencia(idSala uuid.UUID, idMensaje uuid.UUID) ([]Mensaje, error) {
+	if idMensaje == uuid.Nil {
+		fmt.Println("idMensaje es UUID de ceros, obteniendo todos los mensajes de la sala...")
+		return (*q.persistencia).ObtenerMensajesDesdeSala(idSala)
+	}
+	fmt.Println("idMensaje no es UUID de ceros, obteniendo el mensaje con el id especificado...")
+	return (*q.persistencia).ObtenerMensajesDesdeId(idSala, idMensaje)
+}
+
+// Función para obtener todos los mensajes de la cola
+func (q *ColaCircular) obtenerTodosLosMensajes() ([]Mensaje, error) {
+	fmt.Println("idMensaje es UUID de ceros, devolviendo todos los mensajes de la cola...")
+
 	var mensajes []Mensaje
-
-	// Recopilamos los mensajes desde el índice encontrado hasta el final de la cola
-	for i := 0; i < q.Size; i++ {
-		mensaje := q.Buffer[(index+i)%q.Capacity]
+	for i := 0; i < q.size; i++ {
+		mensaje := q.buffer[(q.head+i)%q.capacity]
 		mensajes = append(mensajes, mensaje)
 	}
-
+	fmt.Printf("Todos los mensajes en la cola: %v\n", mensajes)
 	return mensajes, nil
 }
 
+// Función para buscar un mensaje en la cola
+func (q *ColaCircular) buscarMensajeEnCola(idMensaje uuid.UUID) (Mensaje, int, error) {
+	fmt.Println("Buscando el mensaje en la cola circular...")
+
+	for i := 0; i < q.size; i++ {
+		mensaje := q.buffer[(q.head+i)%q.capacity]
+		if mensaje.IDM == idMensaje {
+			fmt.Printf("Mensaje encontrado en el índice: %d\n", i)
+			return mensaje, i, nil
+		}
+	}
+
+	// Si no se encuentra el mensaje
+	fmt.Println("Mensaje no encontrado en la cola.")
+	return Mensaje{}, -1, fmt.Errorf("mensaje con id %s no encontrado en la cola", idMensaje)
+}
+
+// Función para obtener el mensaje desde la persistencia
+func (q *ColaCircular) obtenerMensajeDesdePersistencia(idSala uuid.UUID, idMensaje uuid.UUID) ([]Mensaje, error) {
+	return q.obtenerMensajesDesdePersistencia(idSala, idMensaje)
+}
+
+// Función para recopilar mensajes desde un índice
+func (q *ColaCircular) recopilarMensajesDesdeIndice(index int, mensaje Mensaje) ([]Mensaje, error) {
+	var mensajes []Mensaje
+	fmt.Println("Recopilando mensajes desde el índice encontrado hasta el final de la cola...")
+
+	// Recopilamos el primer mensaje
+	mensajes = append(mensajes, mensaje)
+
+	// Recopilamos los mensajes desde el índice encontrado hasta el final de la cola
+	for i := 1; i < q.size; i++ {
+		mensaje := q.buffer[(index+i)%q.capacity]
+		mensajes = append(mensajes, mensaje)
+	}
+
+	// Log para los mensajes que se devolverán
+	fmt.Printf("Mensajes recopilados: %v\n", mensajes)
+
+	return mensajes, nil
+}
+ 
+
 // ObtenerElementos devuelve un slice con los mensajes almacenados en la cola.
 func (c *ColaCircular) ObtenerElementos() []Mensaje {
-	c.Mu.Lock()
-	defer c.Mu.Unlock()
+	c.mu.Lock()
+	defer c.mu.Unlock()
 
 	// Si la cola está vacía, devolvemos un slice vacío.
-	if c.Size == 0 {
+	if c.size == 0 {
 		return []Mensaje{}
 	}
 
 	// Crear un slice para almacenar los mensajes en el orden correcto.
-	elementos := make([]Mensaje, 0, c.Size)
+	elementos := make([]Mensaje, 0, c.size)
 
 	// Recorrer desde `head` hasta el final, manejando la circularidad.
-	for i := 0; i < c.Size; i++ {
-		index := (c.Head + i) % c.Capacity
-		elementos = append(elementos, c.Buffer[index])
+	for i := 0; i < c.size; i++ {
+		index := (c.head + i) % c.capacity
+		elementos = append(elementos, c.buffer[index])
 	}
 
 	return elementos
+}
+
+// ComprobarYVisualizarMensajes verifica la cola y muestra los mensajes si existen.
+func (cola *ColaCircular) ComprobarYVisualizarMensajes() (bool, []Mensaje, string) {
+	// Verificar si la cola es nula
+	if cola == nil {
+		log.Println("Error: La cola es nula.")
+		return false, nil, "La cola es nula."
+	}
+
+	cola.mu.Lock()
+	defer cola.mu.Unlock()
+
+	// Verificar si la cola tiene mensajes
+	if cola.size == 0 {
+		log.Println("Error: La cola está vacía.")
+		return false, nil, "La cola está vacía."
+	}
+
+	// Obtener y visualizar los mensajes
+	mensajes := cola.ObtenerElementos()
+	log.Println("La cola contiene los siguientes mensajes:")
+	for i, mensaje := range mensajes {
+		log.Printf("Mensaje %d: %+v\n", i+1, mensaje)
+	}
+
+	return true, mensajes, "La cola contiene mensajes."
 }

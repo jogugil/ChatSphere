@@ -34,8 +34,16 @@ func NewMessageHandler(c *gin.Context) {
 	log.Printf("Datos recibidos: %+v", requestData)
 
 	// Obtener la instancia del singleton
-	secMod := services.GetSecModServidorChat ()
-
+	secMod, err := services.GetSecModServidorChat ()
+	if err != nil {
+		// Si el IdSala no es un UUID válido, devolver un error
+		log.Printf("Error al obtener el servidor chat. : %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "nok",
+			"message": "Servicio  chat no disponible",
+		})
+		return
+	}
 	// Parsear el IdSala como UUID
 	idSalaUUID, err := uuid.Parse(requestData.IdSala)
 	if err != nil {

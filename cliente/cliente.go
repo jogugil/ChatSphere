@@ -22,12 +22,12 @@ type LoginResponse struct {
 
 // Estructura de datos para el mensaje
 type MessageResponse struct {
-	Nickname   string `json:"nickname"`
-	Idsala     string `json:"idsala"`
-	Namesala   string `json:"namesala"`
-	Idmensaje  string `json:"idmensaje"`
-	Mensaje    string `json:"mensaje"`
-	De         string `json:"de"`
+	Nickname  string `json:"nickname"`
+	Idsala    string `json:"idsala"`
+	Namesala  string `json:"namesala"`
+	Idmensaje string `json:"idmensaje"`
+	Mensaje   string `json:"mensaje"`
+	De        string `json:"de"`
 }
 
 func login(nickname string) (LoginResponse, error) {
@@ -84,17 +84,22 @@ func enviarMensaje(token, idsala, mensaje string) error {
 }
 
 func conectarWebSocket() (*websocket.Conn, error) {
-	// Conectar al servidor WebSocket
-	conn, _, err := websocket.DefaultDialer.Dial("ws://localhost:8081/ws", nil)
-	if err != nil {
-		return nil, err
+	// Intentar reconectar en caso de desconexión
+	for {
+		conn, _, err := websocket.DefaultDialer.Dial("ws://localhost:8081/ws", nil)
+		if err != nil {
+			log.Printf("Error al conectar WebSocket, reintentando: %v", err)
+			time.Sleep(2 * time.Second)
+			continue
+		}
+		return conn, nil
 	}
-	return conn, nil
 }
 
 func obtenerMensajes(conn *websocket.Conn, nickname, idsala, token, ultimoIdMensaje string) ([]MessageResponse, error) {
 	// Crear el mensaje de solicitud
 	requestData := map[string]string{
+		"operacion":       "listmenssage",
 		"nickName":        nickname,
 		"idSala":          idsala,
 		"tokenSesion":     token,
@@ -119,10 +124,18 @@ func obtenerMensajes(conn *websocket.Conn, nickname, idsala, token, ultimoIdMens
 		return nil, err
 	}
 
-	// Decodificar la respuesta en la lista de mensajes
+	// Verificar si la respuesta es un objeto único o un array de mensajes
+	var mensajeIndividual MessageResponse
+	err = json.Unmarshal(msg, &mensajeIndividual)
+	if err == nil {
+		// Si no hubo error al deserializar como mensaje individual, lo empaquetamos en un slice
+		return []MessageResponse{mensajeIndividual}, nil
+	}
+
+	// Intentar decodificar como un arreglo de mensajes
 	var mensajes []MessageResponse
 	if err := json.Unmarshal(msg, &mensajes); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error al deserializar la respuesta: %v", err)
 	}
 
 	return mensajes, nil
@@ -149,10 +162,9 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error al conectar WebSocket: %v", err)
 	}
-	defer conn.Close()
 
 	// Obtener los mensajes
-	mensajes, err := obtenerMensajes(conn, loginResp.Nickname, loginResp.Idsala, loginResp.Token, "00000000")
+	mensajes, err := obtenerMensajes(conn, loginResp.Nickname, loginResp.Idsala, loginResp.Token, "00000000-0000-0000-0000-000000000000")
 	if err != nil {
 		log.Fatalf("Error al obtener mensajes: %v", err)
 	}
@@ -163,19 +175,18 @@ func main() {
 		fmt.Printf("ID Mensaje: %s, Mensaje: %s, Enviado por: %s\n", mensaje.Idmensaje, mensaje.Mensaje, mensaje.De)
 	}
 
-	// Ahora enviamso oro mensaje e intentamos recuperarlo
-	time.Sleep(2 * time.Second) // Espera por ejemplo 2 segundos antes de cerrar
+	// Ahora enviamos otro mensaje e intentamos recuperarlo
+	time.Sleep(2 * time.Second) // Espera 2 segundos antes de cerrar
 
-	// Enviar un mensaje
+	// Enviar un segundo mensaje
 	err = enviarMensaje(loginResp.Token, loginResp.Idsala, "Hola, este es un segundo mensaje de prueba.")
 	if err != nil {
 		log.Fatalf("Error al enviar el mensaje: %v", err)
 	}
-	fmt.Println("Mensaje enviado correctamente")
+	fmt.Println("Segundo mensaje enviado correctamente")
 
-	//intentamso recuperar la lsita d emensjaes nuevos que es el segundo enviado.
-	// Obtener los mensajes
-	mensajes1, err := obtenerMensajes(conn, loginResp.Nickname, loginResp.Idsala, loginResp.Token, "00000000")
+	// Intentamos recuperar la lista de mensajes nuevos (el segundo mensaje enviado)
+	mensajes1, err := obtenerMensajes(conn, loginResp.Nickname, loginResp.Idsala, loginResp.Token, "00000000-0000-0000-0000-000000000000")
 	if err != nil {
 		log.Fatalf("Error al obtener mensajes: %v", err)
 	}
@@ -184,4 +195,5 @@ func main() {
 	for _, mensaje := range mensajes1 {
 		fmt.Printf("ID Mensaje: %s, Mensaje: %s, Enviado por: %s\n", mensaje.Idmensaje, mensaje.Mensaje, mensaje.De)
 	}
+	defer conn.Close()
 }

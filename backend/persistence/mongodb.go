@@ -3,6 +3,7 @@ package persistence
 import (
 	"backend/entities"
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 
@@ -12,23 +13,21 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-// MongoPersistencia es el contenedor de la conexión y operaciones con MongoDB
+// Configuración de MongoDB (puede ser configurada en la propia estructura de MongoPersistencia)
+
+var mongoInstance *MongoPersistencia
+var once sync.Once
+
 type MongoPersistencia struct {
 	client *mongo.Client
 	db     *mongo.Database
 }
 
-// Configuración de MongoDB (puede ser configurada en la propia estructura de MongoPersistencia)
-var uri = "mongodb://localhost:27017" // URI del servidor MongoDB
-var dbName = "nombreBaseDeDatos"      // Nombre de la base de datos
-
-var mongoInstance *MongoPersistencia
-var once sync.Once
-
-// NewMongoPersistencia crea una nueva instancia de MongoPersistencia, asegurando que solo haya una conexión
-func NewMongoPersistencia() (*MongoPersistencia, error) {
+// NuevaMongoPersistencia crea o devuelve una instancia de MongoPersistencia con pool de conexiones
+func NuevaMongoPersistencia(uri, dbName string) (*entities.Persistencia, error) {
 	once.Do(func() {
-		client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(uri))
+		// Configura el cliente MongoDB con un pool de conexiones.
+		client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(uri).SetMaxPoolSize(10)) // Pool con un máximo de 10 conexiones
 		if err != nil {
 			fmt.Println("Error de conexión con MongoDB:", err)
 			return
@@ -41,7 +40,37 @@ func NewMongoPersistencia() (*MongoPersistencia, error) {
 		return nil, fmt.Errorf("no se pudo crear la instancia de MongoPersistencia")
 	}
 
-	return mongoInstance, nil
+	var persistenciaPersist entities.Persistencia = mongoInstance
+	return &persistenciaPersist, nil
+}
+// ObtenerInstanciaDB obtiene la instancia de la base de datos (para evitar crear múltiples conexiones)
+// ObtenerInstanciaDB obtiene la instancia de la base de datos (para evitar crear múltiples conexiones)
+func ObtenerInstanciaDB() (*entities.Persistencia, error) {
+	if mongoInstance == nil {
+		// Regresamos un error si la instancia no ha sido inicializada
+		return nil, errors.New("la instancia de MongoPersistencia no ha sido inicializada")
+	}
+	
+	// Devolvemos mongoInstance como un tipo Persistencia, que implementa la interfaz Persistencia
+	var persistenciaPersist entities.Persistencia = mongoInstance
+	return &persistenciaPersist, nil
+}
+// Implementa GuardarSala
+func (m *MongoPersistencia) GuardarSala(sala entities.Sala) error {
+	collection := m.db.Collection("salas")
+	_, err := collection.InsertOne(context.TODO(), sala)
+	return err
+}
+
+// Implementa ObtenerSala
+func (m *MongoPersistencia) ObtenerSala(id uuid.UUID) (entities.Sala, error) {
+	var sala entities.Sala
+	collection := m.db.Collection("salas")
+	err := collection.FindOne(context.TODO(), bson.M{"id": id}).Decode(&sala)
+	if err != nil {
+		return entities.Sala{}, err
+	}
+	return sala, nil
 }
 
 // GuardarMensaje guarda un solo mensaje en la base de datos MongoDB
@@ -55,7 +84,7 @@ func (mp *MongoPersistencia) GuardarMensaje(mensaje *entities.Mensaje) error {
 }
 
 // GuardarMensajesEnBaseDeDatos guarda una lista de mensajes en MongoDB
-func (mp *MongoPersistencia) GuardarMensajesEnBaseDeDatos(mensajes []*entities.Mensaje) error {
+func (mp *MongoPersistencia) GuardarMensajesEnBaseDeDatos(mensajes []entities.Mensaje) error {
 	collection := mp.db.Collection("mensajes")
 
 	// Convertimos los mensajes a una lista de interfaces{}
@@ -116,7 +145,8 @@ func (mp *MongoPersistencia) ObtenerMensajesDesdeSala(idSala uuid.UUID) ([]entit
 
 	return mensajes, nil
 }
-func (mp *MongoPersistencia) ObtenerMensajesDesdeId(idSala uuid.UUID, idMensaje string) ([]entities.Mensaje, error) {
+
+func (mp *MongoPersistencia) ObtenerMensajesDesdeId(idSala uuid.UUID, idMensaje uuid.UUID) ([]entities.Mensaje, error) {
 	collection := mp.db.Collection("mensajes")
 
 	// Buscar el mensaje base

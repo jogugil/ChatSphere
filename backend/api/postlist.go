@@ -7,16 +7,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"net/http"
 
 	"github.com/google/uuid"
 )
 
 // Estructura para recibir los datos de la solicitud
 type RequestData struct {
+	Operacion       string `json:"operacion"`
 	IdUltimoMensaje string `json:"idUltimoMensaje"`
 	TokenSesion     string `json:"tokenSesion"`
-	Nickname        string `json:"nickname"`
+	Nickname        string `json:"nickName"`
 	IdSala          string `json:"idSala"`
 }
 
@@ -36,8 +36,6 @@ type Response struct {
 	Data        []MensajeResponse `json:"data,omitempty"` // Lista de mensajes si existen
 }
 
-
-
 // Convertir los mensajes a la estructura de respuesta
 func ConvertirMensajes(mensajes []entities.Mensaje) []MensajeResponse {
 	log.Println("ConvertirMensajes: Iniciando conversión de mensajes.")
@@ -54,20 +52,19 @@ func ConvertirMensajes(mensajes []entities.Mensaje) []MensajeResponse {
 }
 
 // Manejador para la ruta POST /messagelist
-func PostListHandler(r *http.Request) []byte {
+func PostListHandler(msg []byte) []byte {
 	log.Println("PostListHandler: Iniciando el manejo de la solicitud POST para la lista de mensajes.")
 
 	// Decodificar el cuerpo de la solicitud
 	var requestData RequestData
-
-	log.Printf("PostListHandler: Datos de solicitud decodificados: %+v\n", requestData)
 
 	// Crear un canal para pasar la respuesta
 	respChan := make(chan Response)
 
 	// Ejecutar el manejo de la solicitud en una goroutine
 	go func() {
-		err := json.NewDecoder(r.Body).Decode(&requestData)
+		err := json.Unmarshal(msg, &requestData)
+		log.Printf("PostListHandler: Datos de solicitud decodificados: %+v\n", requestData)
 		if err != nil {
 			log.Println("PostListHandler: Error al decodificar los datos:", err)
 			// Enviar error por WebSocket
@@ -75,10 +72,19 @@ func PostListHandler(r *http.Request) []byte {
 				Status:  "NOK",
 				Message: "Solicitud incorrecta. cod:00",
 			}
-			return  
+			return
 		}
 		// Obtener la instancia del singleton
-		secMod := services.GetSecModServidorChat()
+		secMod,err := services.GetSecModServidorChat()
+		if err != nil {
+			// Si el IdSala no es un UUID válido, devolver un error
+			log.Printf("Error al obtener el servidor chat. : %v", err)
+			respChan <- Response{
+				Status:  "NOK",
+				Message: "Servicio  chat no disponible",
+			}
+			return
+		}
 		log.Println("PostListHandler: Obteniendo usuario por token de sesión.")
 		user, err := secMod.GestionUsuarios.BuscarUsuarioPorToken(requestData.TokenSesion)
 		if err != nil {

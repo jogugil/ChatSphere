@@ -7,12 +7,36 @@ import (
 	"backend/types"
 	"errors"
 	"fmt"
+	"log"
+	"sync"
 
 	"github.com/google/uuid"
 )
 
 type GestionUsuarios struct {
-	Usuarios []*entities.Usuario
+	Usuarios []*entities.Usuario // Lista de usuarios
+	once     sync.Once            // Para garantizar la inicialización única de la instancia
+}
+
+var instanciaUser *GestionUsuarios // Instancia única de GestionUsuarios
+
+// NuevaGestionUsuarios crea y devuelve una instancia Singleton de GestionUsuarios
+func NuevaGestionUsuarios() *GestionUsuarios {
+	// Si la instancia no ha sido creada, se crea una nueva
+	if instanciaUser == nil {
+		instanciaUser = &GestionUsuarios{
+			Usuarios: make([]*entities.Usuario, 0), // Inicializamos la lista de usuarios vacía
+		}
+	}
+	// Usamos once.Do para asegurarnos que la configuración solo se realice una vez
+	instanciaUser.once.Do(func() {
+		log.Println("NuevaGestionUsuarios: Inicializando la instancia de Gestión de Usuarios.")
+		// Aquí podrías cargar los usuarios desde una base de datos o archivo si es necesario
+		// Ejemplo de carga de usuarios (esto depende de tu implementación y necesidades)
+		// instancia.CargarUsuariosDesdeArchivo("usuarios.txt")
+		log.Println("NuevaGestionUsuarios: Inicialización completada.")
+	})
+	return instanciaUser
 }
 
 func (gestion *GestionUsuarios) BuscarUsuarioPorToken(token string) (entities.Usuario, error) {
@@ -61,7 +85,7 @@ func (gestion *GestionUsuarios) RegistrarUsuario(nickname string, token string, 
 	fmt.Println("Nuevo usuario creado:", nuevoUsuario.Nickname)
 
 	// Crear una nueva instancia de MongoPersistencia
-	mongoPersistencia, err_per := persistence.NewMongoPersistencia()
+	mongoPersistencia, err_per := persistence.ObtenerInstanciaDB()
 	if err_per != nil {
 		fmt.Println("Error al crear la instancia de MongoPersistencia:", err_per)
 		return nil, err_per
@@ -69,7 +93,7 @@ func (gestion *GestionUsuarios) RegistrarUsuario(nickname string, token string, 
 
 	// Guardar el usuario en la base de datos
 	fmt.Println("Guardando usuario en la base de datos...")
-	err_per = mongoPersistencia.GuardarUsuario(nuevoUsuario)
+	err_per = (*mongoPersistencia).GuardarUsuario(nuevoUsuario)
 	if err_per != nil {
 		fmt.Println("Error al guardar el usuario:", err_per)
 		return nil, err_per

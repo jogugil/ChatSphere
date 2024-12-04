@@ -24,9 +24,14 @@ func WebSocketHandler(c *gin.Context) {
 		log.Println("Error al establecer WebSocket:", err)
 		return
 	}
-	defer conn.Close()
+	defer func() {
+		if err := conn.Close(); err != nil {
+			log.Println("Error al cerrar la conexión WebSocket:", err)
+		} else {
+			log.Println("Conexión WebSocket cerrada correctamente")
+		}
+	}()
 
-	// Leer el mensaje del cliente
 	for {
 		_, msg, err := conn.ReadMessage()
 		if err != nil {
@@ -34,51 +39,60 @@ func WebSocketHandler(c *gin.Context) {
 			break
 		}
 
-		// Procesar el mensaje dependiendo de la petición
-		go func(msg []byte, requestData *http.Request) {
-			var response []byte
+		var data map[string]string
+		err = json.Unmarshal(msg, &data)
+		if err != nil {
+			log.Println("Error al deserializar el mensaje:", err)
+			msgr, _ := json.Marshal(`{"status": "error", "message": "Error al deserializar el mensaje"}`)
+			conn.WriteMessage(websocket.TextMessage, msgr)
+			continue
+		}
 
-			// Aquí procesas el mensaje según la lógica de la aplicación
-			if string(msg) == "/listmenssage" {
-				// Llamamos al handler del API para obtener los mensajes
-				response = callPostListHandler(requestData)
-			} else if string(msg) == "/listusers" {
-				// Llamamos al handler del API para obtener los usuarios
-				response = callPostUsersHandler(requestData)
-			} else if string(msg) == "/heat" {
-				// Llamamos al handler del API para obtener el "heat"
-				response = callheatHandler(requestData)
-			} else {
-				response,err = json.Marshal(`{"status": "error", "message": "Comando no reconocido"}`)
-			}
+		operacion, exists := data["operacion"]
+		if !exists {
+			log.Println("No se encontró la clave 'operacion' en el mensaje")
+			msgr, _ := json.Marshal(`{"status": "error", "message": "No se encontró la clave 'operacion' en el mensaje"}`)
+			conn.WriteMessage(websocket.TextMessage, msgr)
+			continue
+		}
 
-			// Enviar la respuesta al cliente WebSocket
-			err := conn.WriteMessage(websocket.TextMessage, []byte(response))
-			if err != nil {
-				log.Println("Error al enviar mensaje WebSocket:", err)
-			}
-		}(msg, c.Request)
+		var response []byte
+		switch operacion {
+		case "listmenssage":
+			response = callPostListHandler(msg)
+		case "listusers":
+			response = callPostUsersHandler(msg)
+		case "heat":
+			response = callheatHandler(msg)
+		default:
+			response, _ = json.Marshal(`{"status": "error", "message": "Comando no reconocido"}`)
+		}
+
+		err = conn.WriteMessage(websocket.TextMessage, response)
+		if err != nil {
+			log.Println("Error al enviar mensaje WebSocket:", err)
+		}
 	}
 }
 
 // Aquí solo retornas una cadena de texto (JSON) que representa la respuesta
-func callPostListHandler(requestData *http.Request) []byte {
+func callPostListHandler(msg []byte) []byte {
 	// Llamamos a la función correspondiente del API
 	// Aquí debes definir tu lógica de la función, por ejemplo:
-	result := api.PostListHandler(requestData) // Llamar a la función de API pasando la request
-	return result // Retornamos la respuesta como un string (puede ser un JSON)
+	result := api.PostListHandler(msg) // Llamar a la función de API pasando la request
+	return result                      // Retornamos la respuesta como un string (puede ser un JSON)
 }
 
-func callPostUsersHandler(requestData *http.Request) []byte {
+func callPostUsersHandler(msg []byte) []byte {
 	// Llamamos a la función correspondiente del API
 	// Aquí debes definir tu lógica de la función
-	result := api.PostUsersHandler (requestData) // Llamar a la función de API pasando la request
-	return result // Retornamos la respuesta como un string (puede ser un JSON)
+	result := api.PostUsersHandler(msg) // Llamar a la función de API pasando la request
+	return result                       // Retornamos la respuesta como un string (puede ser un JSON)
 }
 
 // Tu función que maneja el "heat" y devuelve el código 202
-func callheatHandler(requestData *http.Request) []byte {
-	log.Printf("callheatHandler procesando solicitud: %v", requestData)
+func callheatHandler(msg []byte) []byte {
+	log.Printf("callheatHandler procesando solicitud: %v", msg)
 	// Si todo va bien, se establece el código de estado 202 y se envía la respuesta
 	errorJSON, err := json.Marshal(`{"status": "OK", "message": "Request accepted for processing"}`)
 	if err != nil {
@@ -87,4 +101,3 @@ func callheatHandler(requestData *http.Request) []byte {
 	}
 	return errorJSON
 }
- 

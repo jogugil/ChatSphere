@@ -35,6 +35,7 @@ func RecargarVariablesDeEntorno() {
 	envVars["PortServer"] = os.Getenv("EXP_PORT")
 	envVars["NameServer"] = os.Getenv("EXP_SERVER")
 	envVars["URIMongo"] = os.Getenv("MONGODB_URI")
+	envVars["NameMongo"] = os.Getenv("NAME_MONGO")	
 	envVars["SizeQueue"] = os.Getenv("EXP_SIZE_QMESSAGE")
 } 
 // CargarVariablesDeEntorno carga las variables de entorno desde un archivo .env

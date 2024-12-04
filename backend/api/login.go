@@ -3,6 +3,7 @@ package api
 import (
 	"backend/services"
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -34,8 +35,16 @@ func LoginHandler(c *gin.Context) {
 	fmt.Println("Datos recibidos de la solicitud:", requestData)
 
 	// Obtener la instancia del singleton
-	secMod := services.GetSecModServidorChat ()
-
+	secMod,err := services.GetSecModServidorChat ()
+	if err != nil {
+		// Si el IdSala no es un UUID válido, devolver un error
+		log.Printf("Error al obtener el servidor chat. : %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "nok",
+			"message": "Servicio  chat no disponible",
+		})
+		return
+	}
 	// Llamar a EjecutarLogin con el nickname recibido
 	fmt.Println("Ejecutando login para el usuario:", requestData.Nickname)
 	usuario, err := secMod.EjecutarLogin(requestData.Nickname)

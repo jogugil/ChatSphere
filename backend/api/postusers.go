@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"net/http"
 
 	"github.com/google/uuid"
 )
@@ -27,14 +26,12 @@ type ResponseUser struct {
 	UsuariosActivos []UsuarioActivo `json:"data,omitempty"`
 }
 
-func PostUsersHandler(r *http.Request) []byte {
+func PostUsersHandler(msg []byte) []byte {
 	var requestData struct {
 		IdSala      string `json:"idSala"`
 		TokenSesion string `json:"tokenSesion"`
 		Nickname    string `json:"nickname"`
 	}
-
-	log.Printf("PostListHandler: Datos de solicitud decodificados: %+v\n", requestData)
 
 	// Crear un canal para pasar la respuesta
 	respChan := make(chan Response)
@@ -42,7 +39,7 @@ func PostUsersHandler(r *http.Request) []byte {
 	// Validar el token de sesión en una goroutine para no bloquear la respuesta
 	go func() {
 		// Decodificar la solicitud
-		if err := json.NewDecoder(r.Body).Decode(&requestData); err != nil {
+		if err := json.Unmarshal(msg, &requestData); err != nil {
 			log.Printf("Error al decodificar la solicitud: %v", err)
 			respChan <- Response{
 				Status:  "NOK",
@@ -50,9 +47,18 @@ func PostUsersHandler(r *http.Request) []byte {
 			}
 			return
 		}
-
+		log.Printf("PostListHandler: Datos de solicitud decodificados: %+v\n", requestData)
 		// Obtener la instancia del singleton
-		secMod := services.GetSecModServidorChat()
+		secMod,err  := services.GetSecModServidorChat()
+		if err != nil {
+			// Si el IdSala no es un UUID válido, devolver un error
+			log.Printf("Error al obtener el servidor chat. : %v", err)
+			respChan <- Response{
+				Status:  "NOK",
+				Message: "Servicio  chat no disponible",
+			}
+			return
+		}
 		log.Printf("Singleton de servidor de chat obtenido: %v", secMod)
 
 		// Validar IdSala
@@ -94,7 +100,7 @@ func PostUsersHandler(r *http.Request) []byte {
 		var usuariosActivos []UsuarioActivo
 		for _, usuario := range usuarios {
 			usuariosActivos = append(usuariosActivos, UsuarioActivo{
-				Nickname:        usuario.Nickname,
+				Nickname:         usuario.Nickname,
 				HoraUltimaAccion: usuario.HoraUltimaAccion.Format("2006-01-02 15:04:05"), // Formato estándar de fecha y hora
 			})
 		}
@@ -111,7 +117,7 @@ func PostUsersHandler(r *http.Request) []byte {
 			UsuariosActivos: usuariosActivos,
 		}
 		log.Printf("Respuesta preparada: %+v", respChan)
- 
+
 	}()
 	// Esperar la respuesta del canal
 	response := <-respChan
