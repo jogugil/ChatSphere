@@ -207,6 +207,48 @@ func obtenerUsuarios(conn *websocket.Conn, nickname, idsala, token string) (Resp
 	// Devolver la respuesta deserializada
 	return responUser, nil
 }
+
+// Ejecutar peticiones periódicas
+func ejecutarPeticionesPeriodicas(conn *websocket.Conn, nickname, idsala, token string, stopCh chan bool) {
+	ticker := time.NewTicker(10 * time.Second) // intervalo de 10 segundos
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			// Intentamos recuperar los usuarios activos
+			usuarios, err_u := obtenerUsuarios(conn, nickname, idsala, token)
+			if err_u != nil {
+				log.Printf("Error al obtener usuarios: %v", err_u)
+				// Si ocurre un error, intentamos reconectar o terminamos el hilo.
+				// Aquí podrías implementar lógica de reconexión, o simplemente terminar.
+				// Si deseas salir del bucle, podrías cerrar el canal stopCh.
+				stopCh <- true
+				return
+			} else {
+				// Imprimir los usuarios recibidos
+				fmt.Println("Usuarios recibidos:")
+				MostrarUsuarios(usuarios)
+			}
+
+			// Intentamos recuperar la lista de mensajes nuevos
+			mensajes, err_m2 := obtenerMensajes(conn, nickname, idsala, token, "00000000-0000-0000-0000-000000000000")
+			if err_m2 != nil {
+				log.Printf("Error al obtener mensajes: %v", err_m2)
+				stopCh <- true
+				return
+			} else {
+				// Imprimir los mensajes recibidos
+				fmt.Println("Mensajes recibidos:")
+				MostrarMensajes(mensajes)
+			}
+
+		case <-stopCh:
+			log.Println("Deteniendo el goroutine debido a la desconexión.")
+			return
+		}
+	}
+}
 func main() {
 	// Solicitar el nickname al usuario
 	fmt.Print("Introduce tu nickname: ")
@@ -242,6 +284,19 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error al conectar WebSocket: %v", err)
 	}
+
+	// Canal para controlar la detención del goroutine
+	stopCh := make(chan bool)
+
+	// Iniciar el goroutine para ejecutar las peticiones periódicas
+	go ejecutarPeticionesPeriodicas(conn, loginResp.Nickname, loginResp.Idsala, loginResp.Token, stopCh)
+
+	// Mantener el programa activo hasta recibir una señal de detención o desconexión
+	// Función para esperar la detención del programa sin bloquear el hilo principal
+	go func() {
+		<-stopCh
+		log.Println("Programa detenido debido a la desconexión.")
+	}()
 
 	//Intentamos recuperar los usuarios activos
 	usuarios, err_u1 := obtenerUsuarios(conn, loginResp.Nickname, loginResp.Idsala, loginResp.Token)
@@ -297,6 +352,10 @@ func main() {
 		fmt.Println("usuarios recibidos 2 :")
 		MostrarUsuarios(usuarios)
 	}
+
+	// Ahora enviamos otro mensaje e intentamos recuperarlo
+	time.Sleep(20 * time.Second) // Espera 2 segundos antes de cerrar
+
 	defer func() {
 		if err := conn.Close(); err != nil {
 			log.Printf("error al cerrar la conexión WebSocket Cliente: %v", err)
