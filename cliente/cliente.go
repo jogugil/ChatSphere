@@ -40,6 +40,27 @@ type Response struct {
 	Data        []MessageResponse `json:"data,omitempty"` // Lista de mensajes si existen
 }
 
+// Estructura de datos para enviar en la solicitud
+type RequestUserData struct {
+	IdSala      string `json:"idSala"`
+	TokenSesion string `json:"tokenSesion"`
+	Nickname    string `json:"nickname"`
+	Operacion   string `json:"operacion"`
+}
+
+// Estructura de la respuesta esperada
+type ResponseUser struct {
+	Status          string `json:"status"`
+	Message         string `json:"message"`
+	TokenSesion     string `json:"tokenSesion"`
+	Nickname        string `json:"nickname"`
+	IdSala          string `json:"idSala"`
+	UsuariosActivos []struct {
+		Nickname         string `json:"nickname"`
+		HoraUltimaAccion string `json:"horaUltimaAccion"`
+	} `json:"data,omitempty"`
+}
+
 func login(nickname string) (LoginResponse, error) {
 	// Crear los datos para el login
 	data := map[string]string{"nickname": nickname}
@@ -143,6 +164,49 @@ func obtenerMensajes(conn *websocket.Conn, nickname, idsala, token, ultimoIdMens
 	}
 	return mensajeIndividual.Data, nil
 }
+func obtenerUsuarios(conn *websocket.Conn, nickname, idsala, token string) (ResponseUser, error) {
+	// Declarar la estructura RequestUserData fuera de la llamada de la función
+	requestData := struct {
+		IdSala      string `json:"idSala"`
+		TokenSesion string `json:"tokenSesion"`
+		Nickname    string `json:"nickname"`
+		Operacion   string `json:"operacion"`
+	}{
+		IdSala:      idsala,
+		TokenSesion: token,
+		Nickname:    nickname,
+		Operacion:   "listusers",
+	}
+
+	// Convertir a JSON
+	jsonData, err := json.Marshal(requestData)
+	if err != nil {
+		return ResponseUser{}, err // Devolver un ResponseUser vacío y el error
+	}
+
+	// Enviar solicitud de lista de usuarios
+	err = conn.WriteMessage(websocket.TextMessage, jsonData)
+	if err != nil {
+		return ResponseUser{}, err // Devolver un ResponseUser vacío y el error
+	}
+
+	// Leer la respuesta del WebSocket
+	_, msg, err := conn.ReadMessage()
+	if err != nil {
+		return ResponseUser{}, err // Devolver un ResponseUser vacío y el error
+	}
+
+	// Verificar si la respuesta es un objeto único (ResponseUser)
+	var responUser ResponseUser
+	err = json.Unmarshal(msg, &responUser)
+	if err != nil {
+		// Si no hubo error al deserializar como mensaje individual, devolver el error
+		return ResponseUser{}, fmt.Errorf("error al deserializar la respuesta: %v", err)
+	}
+
+	// Devolver la respuesta deserializada
+	return responUser, nil
+}
 func main() {
 	// Solicitar el nickname al usuario
 	fmt.Print("Introduce tu nickname: ")
@@ -179,6 +243,16 @@ func main() {
 		log.Fatalf("Error al conectar WebSocket: %v", err)
 	}
 
+	//Intentamos recuperar los usuarios activos
+	usuarios, err_u1 := obtenerUsuarios(conn, loginResp.Nickname, loginResp.Idsala, loginResp.Token)
+	if err_u1 != nil {
+		log.Fatalf("Error al obtener usuarios 1: %v", err_u1)
+	} else {
+		// Imprimir los mensajes recibidos
+		fmt.Println("usuarios recibidos 1 :")
+		MostrarUsuarios(usuarios)
+	}
+
 	// Obtener los mensajes
 	mensajes, err := obtenerMensajes(conn, loginResp.Nickname, loginResp.Idsala, loginResp.Token, "00000000-0000-0000-0000-000000000000")
 	if err != nil {
@@ -198,7 +272,7 @@ func main() {
 	mensaje2 := scanner.Text()
 
 	// Enviar el segundo mensaje
-	err = enviarMensaje(loginResp.Token,  loginResp.Idsala, loginResp.Nickname, mensaje2)
+	err = enviarMensaje(loginResp.Token, loginResp.Idsala, loginResp.Nickname, mensaje2)
 	if err != nil {
 		log.Fatalf("Error al enviar el mensaje: %v", err)
 	}
@@ -214,6 +288,15 @@ func main() {
 		MostrarMensajes(mensajes)
 	}
 
+	//Intentamos recuperar los usuarios activos
+	usuarios, err_u := obtenerUsuarios(conn, loginResp.Nickname, loginResp.Idsala, loginResp.Token)
+	if err_u != nil {
+		log.Fatalf("Error al obtener usuarios 2: %v", err_u)
+	} else {
+		// Imprimir los mensajes recibidos
+		fmt.Println("usuarios recibidos 2 :")
+		MostrarUsuarios(usuarios)
+	}
 	defer func() {
 		if err := conn.Close(); err != nil {
 			log.Printf("error al cerrar la conexión WebSocket Cliente: %v", err)
@@ -231,4 +314,23 @@ func MostrarMensajes(mensajes []MessageResponse) {
 		fmt.Printf("  Nickname: %s\n", mensaje.Nickname)
 		fmt.Printf("  Texto: %s\n", mensaje.Texto)
 	}
+}
+
+// Función MostrarUsuarios que filtra por idSala y muestra los usuarios activos
+func MostrarUsuarios(usuarios ResponseUser) {
+	// Mostrar el ID de la sala y los usuarios activos
+	fmt.Printf("Sala: %s\n", usuarios.IdSala)
+	// Iterar sobre cada ResponseUser en el slice de usuarios
+	if len(usuarios.UsuariosActivos) == 0 {
+		fmt.Println("No hay usuarios activos en esta sala.")
+	} else {
+		listuser := usuarios.UsuariosActivos
+		for _, usuario := range listuser {
+			// Mostrar el Nickname y la Hora de la última acción
+			fmt.Printf("Usuario: %s, Última acción: %s\n", usuario.Nickname, usuario.HoraUltimaAccion)
+		}
+	}
+
+	// Si no se encuentra ninguna sala con el idSala proporcionado
+	fmt.Println("Sala no encontrada o no hay usuarios activos.")
 }

@@ -34,28 +34,28 @@ func PostUsersHandler(msg []byte) []byte {
 	}
 
 	// Crear un canal para pasar la respuesta
-	respChan := make(chan Response)
+	respChan := make(chan ResponseUser)
 
 	// Validar el token de sesión en una goroutine para no bloquear la respuesta
 	go func() {
 		// Decodificar la solicitud
 		if err := json.Unmarshal(msg, &requestData); err != nil {
 			log.Printf("Error al decodificar la solicitud: %v", err)
-			respChan <- Response{
+			respChan <- ResponseUser{
 				Status:  "NOK",
 				Message: "Solicitud incorrecta. Error al decodificar la solicitud cod:00",
 			}
 			return
 		}
 		log.Printf("PostListHandler: Datos de solicitud decodificados: %+v\n", requestData)
+
 		// Obtener la instancia del singleton
 		secMod, err := services.GetSecModServidorChat()
 		if err != nil {
-			// Si el IdSala no es un UUID válido, devolver un error
 			log.Printf("Error al obtener el servidor chat. : %v", err)
-			respChan <- Response{
+			respChan <- ResponseUser{
 				Status:  "NOK",
-				Message: "Servicio  chat no disponible",
+				Message: "Servicio chat no disponible",
 			}
 			return
 		}
@@ -65,7 +65,7 @@ func PostUsersHandler(msg []byte) []byte {
 		idSala, err := uuid.Parse(requestData.IdSala)
 		if err != nil {
 			log.Printf("Error al parsear IdSala: %v", err)
-			respChan <- Response{
+			respChan <- ResponseUser{
 				Status:  "NOK",
 				Message: "Error al parsear IdSala cod:00",
 			}
@@ -76,7 +76,7 @@ func PostUsersHandler(msg []byte) []byte {
 		_, err = models.ValidarTokenSesion(requestData.TokenSesion)
 		if err != nil {
 			log.Printf("PostUsersHandler: Error al validar el token: %v", err)
-			respChan <- Response{
+			respChan <- ResponseUser{
 				Status:  "NOK",
 				Message: "Sesión de usuario inválida, por favor inicie sesión nuevamente.",
 			}
@@ -87,8 +87,7 @@ func PostUsersHandler(msg []byte) []byte {
 		usuarios := secMod.GestionUsuarios.ObtenerUsuariosActivos()
 		if usuarios == nil {
 			log.Printf("Error al obtener usuarios activos: %v", err)
-
-			respChan <- Response{
+			respChan <- ResponseUser{
 				Status:  "NOK",
 				Message: fmt.Sprintf("Error al obtener usuarios activos: %s", err.Error()),
 			}
@@ -106,8 +105,6 @@ func PostUsersHandler(msg []byte) []byte {
 		}
 
 		// Preparar la respuesta
-		respChan := make(chan ResponseUser)
-
 		respChan <- ResponseUser{
 			Status:          "OK",
 			Message:         "Usuarios activos obtenidos correctamente.",
@@ -116,28 +113,26 @@ func PostUsersHandler(msg []byte) []byte {
 			IdSala:          requestData.IdSala,
 			UsuariosActivos: usuariosActivos,
 		}
-		log.Printf("Respuesta preparada: %+v", respChan)
-
 	}()
+
 	// Esperar la respuesta del canal
 	response := <-respChan
 
 	// Serializar la respuesta a JSON
 	responseJSON, err := json.Marshal(response)
 	if err != nil {
-		log.Printf("PostListHandler: Error al serializar la respuesta:%v", err)
-		respChan <- Response{
+		log.Printf("Error al serializar la respuesta: %v", err)
+		// Manejo de error de serialización
+		errorResponse := ResponseUser{
 			Status:  "NOK",
-			Message: "Error interno del servidor. No hay mensajes nuevos.PostListHandler: Error al serializar la respuesta",
+			Message: "Error interno del servidor. No se pudo procesar la respuesta.",
 		}
-		response := <-respChan
-		responseJSON, err := json.Marshal(response)
+		responseJSON, err = json.Marshal(errorResponse)
 		if err != nil {
-			log.Printf("PostListHandler: Error al serializar la respuesta:%v", err)
+			log.Printf("Error al serializar la respuesta de error: %v", err)
 		}
-		return responseJSON
 	}
 
-	// Enviar la respuesta por WebSocket
+	// Retornar la respuesta
 	return responseJSON
 }
