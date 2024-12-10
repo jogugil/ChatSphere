@@ -1,0 +1,23 @@
+services:
+  gochat:
+    build:
+      context: .                  # El contexto está en el directorio raíz
+      dockerfile: Dockerfile      # Asegúrate de que Dockerfile está en `backend/`
+    ports:
+      - "8081:8081"               # Puerto expuesto del contenedor
+    volumes:
+      - ./backend:/app            # Volúmenes para el código fuente (si es necesario en desarrollo)
+      - ./wait-for-it.sh:/usr/local/bin/wait-for-it.sh
+    environment:
+      - MONGO_URI=mongodb://mongodb:27017   # URI para la base de datos MongoDB
+    depends_on:
+      - mongodb                    # Asegura que el servicio `mongodb` esté levantado antes de `gochat`
+    entrypoint: ["mongodb:27017", "--", "/gochat-server"]
+  mongodb:
+    image: mongo:latest            # Usar la imagen oficial de MongoDB
+    ports:
+      - "27017:27017"              # Puerto expuesto de MongoDB
+    volumes:
+      - mongodb_data:/data/db      # Volúmenes persistentes para MongoDB
+volumes:
+  mongodb_data:

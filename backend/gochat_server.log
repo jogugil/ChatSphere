@@ -1,0 +1,28 @@
+Creando nueva instancia de MongoPersistencia con URI: mongodb://localhost:27017 y DB: 100
+Instancia de MongoPersistencia creada correctamente
+gestion_salas.go:39: NuevaGestionSalas: Iniciando la configuración de la instancia.
+gestion_salas.go:52: CargarSalasFijasDesdeArchivo: Cargando salas desde archivo: salas_config.json
+ObtenerInstanciaDB: Obteniendo instancia de base de datos MongoDB...
+ObtenerInstanciaDB: Obteniendo instancia de base de datos MongoDB...
+ObtenerInstanciaDB: Obteniendo instancia de base de datos MongoDB...
+gestion_salas.go:114: CargarSalasFijasDesdeArchivo: Carga completada.
+gestion_salas.go:46: NuevaGestionSalas: Configuración completada.
+gestion_usuarios.go:31: NuevaGestionUsuarios: Inicializando la instancia de Gestión de Usuarios.
+gestion_usuarios.go:35: NuevaGestionUsuarios: Inicialización completada.
+Sala Principal: Sala Principal, ID: 8b5a38e8-6b23-4ef9-a678-9e16c049750b
+Sala Fija: Sala Principal, ID: c1e23c69-b651-4761-b756-e539522eabf3
+Sala Fija: Sala Fija 1, ID: 56c4f5f3-c818-4931-98f8-300f34c35d7f
+[GIN-debug] [WARNING] Creating an Engine instance with the Logger and Recovery middleware already attached.
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] POST   /login                    --> backend/api.LoginHandler (3 handlers)
+[GIN-debug] POST   /newmessage               --> backend/api.NewMessageHandler (3 handlers)
+[GIN-debug] GET    /ws                       --> backend/comm.WebSocketHandler (3 handlers)
+main.go:81: Servidor escuchando en localhost:8081
+[GIN-debug] [WARNING] You trusted all proxies, this is NOT safe. We recommend you to set a value.
+Please check https://pkg.go.dev/github.com/gin-gonic/gin#readme-don-t-trust-all-proxies for details.
+[GIN-debug] Listening and serving HTTP on localhost:8081
+signal: killed

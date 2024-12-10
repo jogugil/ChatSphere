@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"sync"
+
 	"github.com/joho/godotenv"
 )
 
@@ -33,11 +34,12 @@ func RecargarVariablesDeEntorno() {
 	//Cargamos las variables entorno una a una u le ponermos el nombre que quiera
 	envVars["SecretKey"] = os.Getenv("SECRET_KEY")
 	envVars["PortServer"] = os.Getenv("EXP_PORT")
-	envVars["NameServer"] = os.Getenv("EXP_SERVER")
+	envVars["NameServer"] = os.Getenv("NAME_SERVER")
 	envVars["URIMongo"] = os.Getenv("MONGODB_URI")
-	envVars["NameMongo"] = os.Getenv("NAME_MONGO")	
+	envVars["NameMongo"] = os.Getenv("NAME_MONGO")
 	envVars["SizeQueue"] = os.Getenv("EXP_SIZE_QMESSAGE")
-} 
+}
+
 // CargarVariablesDeEntorno carga las variables de entorno desde un archivo .env
 func CargarVariablesDeEntorno() {
 	once.Do(func() {
