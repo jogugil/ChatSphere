@@ -1,4 +1,3 @@
-# Formato: imagen, contenedor, puertos, comprobar_servicio, url_servicio
-mongo:latest, mongodb_container, [27017, 27018], sí, http://localhost:27017
-redis:latest, redis_container, [6379], no,
-nginx:latest, nginx_container, [80, 443], sí, http://localhost:80
+mongo:latest; mongodb_container; [27017, 27018]; sí; http://localhost:27017
+redis:latest; redis_container; [6379]; no;
+nginx:latest; nginx_container; [80, 443]; sí; http://localhost:80

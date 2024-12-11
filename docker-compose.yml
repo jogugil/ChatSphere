@@ -1,22 +1,35 @@
 services:
+  mongodb:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+      - "27018:27018"
+    restart: always
+    volumes:
+      - mongodb_data:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+    healthcheck:
+      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      retries: 3
+      start_period: 10s
+      timeout: 10s
   gochat:
     build:
-      context: .                  # El contexto está en el directorio raíz
-      dockerfile: Dockerfile      # Asegúrate de que Dockerfile está en `backend/`
+      context: .                   # Asegúrate de que Dockerfile esté aquí o ajusta la ruta
+      dockerfile: Dockerfile
     ports:
-      - "8081:8081"               # Puerto expuesto del contenedor
-    volumes:
-      - ./backend:/app            # Volúmenes para el código fuente (si es necesario en desarrollo)
-    environment:
-      - MONGO_URI=mongodb://mongodb:27017   # URI para la base de datos MongoDB
+      - "8081:8081"
     depends_on:
-      - mongodb                    # Asegura que el servicio `mongodb` esté levantado antes de `gochat`
-    entrypoint: ["/gochat-server"]
-  mongodb:
-    image: mongo:latest            # Usar la imagen oficial de MongoDB
-    ports:
-      - "27017:27017"              # Puerto expuesto de MongoDB
+      mongodb:
+        condition: service_healthy # Espera a que MongoDB pase el healthcheck
+    entrypoint: ["/usr/local/bin/wait-for-it.sh", "mongodb:27017", "--", "/gochat-server"]
     volumes:
-      - mongodb_data:/data/db      # Volúmenes persistentes para MongoDB
+      - ./wait-for-it.sh:/usr/local/bin/wait-for-it.sh
+    environment:
+      - MONGO_URI=mongodb://mongodb:27017
+
 volumes:
   mongodb_data:

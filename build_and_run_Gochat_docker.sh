@@ -52,6 +52,9 @@
 
 #!/bin/bash
 
+
+#!/bin/bash
+
 # Función para verificar si el archivo docker-compose.yml existe
 check_docker_compose_file() {
     if [ ! -f "docker-compose.yml" ]; then
@@ -85,6 +88,7 @@ free_ports() {
         echo "✅ Puerto $port está libre."
     fi
 }
+
 # Función para eliminar contenedores conflictivos
 remove_container() {
     local container_name=$1
@@ -95,6 +99,19 @@ remove_container() {
         docker stop "$container_id" && docker rm "$container_id"
     else
         echo "✅ El contenedor $container_name no está en ejecución."
+    fi
+}
+
+# Función para corregir la versión de Go en go.mod
+fix_go_version() {
+    echo "🔍 Corigiendo la versión de Go en go.mod..."
+    if grep -q "go 1\.22" go.mod; then
+        echo "⚠️ Versión de Go 1.22 encontrada. Actualizando a 1.20..."
+        sed -i 's/go 1\.22/go 1.20/' go.mod
+    fi
+    if grep -q "go 1\.23" go.mod; then
+        echo "⚠️ Versión de Go 1.23 encontrada. Actualizando a 1.20..."
+        sed -i 's/go 1\.23/go 1.20/' go.mod
     fi
 }
 
@@ -115,7 +132,22 @@ else
     done
 fi
 
-# Paso 3: Construir y levantar servicios
+# Paso 3: Comprobar si ya existen contenedores que usen los puertos
+echo "🔍 Verificando contenedores que usan los puertos a exponer..."
+for port in $ports; do
+    # Verificar si algún contenedor ya está usando el puerto
+    existing_container=$(docker ps --filter "publish=$port" --format "{{.ID}}")
+    if [ -n "$existing_container" ]; then
+        echo "⚠️ El puerto $port ya está en uso por un contenedor. Eliminando el contenedor..."
+        container_name=$(docker ps --filter "publish=$port" --format "{{.Names}}")
+        remove_container "$container_name"
+    fi
+done
+
+# Paso 4: Corregir la versión de Go antes de ejecutar go mod tidy
+fix_go_version
+
+# Paso 5: Construir y levantar servicios
 echo "🚀 Levantando servicios con docker-compose up..."
 docker-compose up --build
 if [ $? -ne 0 ]; then
@@ -123,7 +155,7 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-# Paso 4: Construir y levantar servicios
+# Paso 6: Construir y levantar servicios con --no-cache
 echo "🚀 Construyendo imágenes con --no-cache..."
 if ! docker-compose build --no-cache; then
     echo "❌ Error en la construcción. Abortando."
@@ -138,7 +170,7 @@ else
     exit 1
 fi
 
-# Paso 5: Comprobación final de estado
+# Paso 7: Comprobación final de estado
 echo "🔍 Comprobando estado de servicios..."
 if docker ps | grep -q "mongo"; then
     echo "✔️ MongoDB está en ejecución."

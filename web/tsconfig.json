@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "target": "ES6",
+    "module": "ESNext",
+    "jsx": "react",
+    "allowJs": true, // Permite que TypeScript procese archivos .js
+    "checkJs": false, // Evita errores estrictos en archivos .js
+    "strict": true, // Opcional: activa comprobaciones estrictas
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "outDir": "./dist",
+    "moduleResolution": "node", // Garantiza que se resuelvan archivos .ts y .tsx. 
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "include": ["src/**/*"], // Incluye archivos en la carpeta src
+  "exclude": ["node_modules"] // Excluye dependencias
+}

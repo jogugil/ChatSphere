@@ -37,7 +37,7 @@ type Response struct {
 	TokenSesion string            `json:"tokenSesion"`
 	Nickname    string            `json:"nickname"`
 	IdSala      string            `json:"idSala"`
-	Data        []MessageResponse `json:"data,omitempty"` // Lista de mensajes si existen
+	ListMessage []MessageResponse `json:"data,omitempty"` // Lista de mensajes si existen
 }
 
 // Estructura de datos para enviar en la solicitud
@@ -162,7 +162,7 @@ func obtenerMensajes(conn *websocket.Conn, nickname, idsala, token, ultimoIdMens
 		// Si no hubo error al deserializar como mensaje individual, lo empaquetamos en un slice
 		return nil, fmt.Errorf("error al deserializar la respuesta lista de mensajes nuevos: %v", err)
 	}
-	return mensajeIndividual.Data, nil
+	return mensajeIndividual.ListMessage, nil
 }
 func obtenerUsuarios(conn *websocket.Conn, nickname, idsala, token string) (ResponseUser, error) {
 	// Declarar la estructura RequestUserData fuera de la llamada de la función

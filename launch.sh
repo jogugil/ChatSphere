@@ -75,40 +75,46 @@
 # Autor: José Javier Gutiérrez Giul
 # Emails: jogugil@gmail.com, jogugi@posgrado.upv.es
 # ==============================================
-manage_container() {
-    # Si no se proporciona el nombre del contenedor, usar 'mongo:latest' por defecto
-    # local container_name="${1:-mongo:latest}"
-    local container_name=$1
 
+manage_container() {
+    local container_name=$1
     if [ -z "$container_name" ]; then
         echo "Por favor, proporciona el nombre del contenedor."
         return 1
     fi
+
+    echo "Verificando estado del contenedor '${container_name}'..."
 
     # Verificar si el contenedor está en ejecución
     if docker ps --filter "name=^${container_name}$" --format '{{.Names}}' | grep -wq "${container_name}"; then
         echo "El contenedor '${container_name}' está en funcionamiento. Deteniéndolo..."
         docker stop "${container_name}"
 
-        # Esperar a que el contenedor esté realmente detenido
+        # Esperar a que el contenedor se detenga
         echo "Esperando a que el contenedor '${container_name}' se detenga..."
         while docker ps --filter "name=^${container_name}$" --format '{{.Names}}' | grep -wq "${container_name}"; do
             sleep 1
         done
+        echo "El contenedor '${container_name}' se ha detenido."
 
-        echo "El contenedor '${container_name}' se ha detenido. Eliminándolo..."
+        # Verificar los puertos antes de eliminar el contenedor
+        exposed_ports=$(docker inspect --format '{{range .NetworkSettings.Ports}}{{.}}{{end}}' "${container_name}" | cut -d ':' -f 2 | cut -d '/' -f 1)
+        liberar_puertos "$exposed_ports"
+
+        # Eliminar contenedor
         docker rm -f "${container_name}"
-        echo "Contenedor eliminado."
-    # Verificar si el contenedor está detenido
-    elif docker ps -a --filter "name=^${container_name}$" --format '{{.Names}}' | grep -wq "${container_name}"; then
-        echo "El contenedor '${container_name}' está detenido. Eliminándolo..."
-        docker rm -f "${container_name}"
-        echo "Contenedor eliminado."
+        echo "Contenedor '${container_name}' eliminado."
     else
-        echo "El contenedor '${container_name}' no existe."
+        echo "El contenedor '${container_name}' no está en ejecución. Verificando si existe..."
+        if docker ps -a --filter "name=^${container_name}$" --format '{{.Names}}' | grep -wq "${container_name}"; then
+            echo "Contenedor '${container_name}' detenido. Eliminándolo..."
+            docker rm -f "${container_name}"
+            echo "Contenedor '${container_name}' eliminado."
+        else
+            echo "No se encontró el contenedor '${container_name}'."
+        fi
     fi
 }
-
 # ==============================================
 # Función: cleanup_ports
 # Descripción:
@@ -133,69 +139,51 @@ manage_container() {
 # Autor: José Javier Gutiérrez Giul
 # Emails: jogugil@gmail.com, jogugi@posgrado.upv.es
 # ==============================================
-function cleanup_ports() {
+# Función para ver puertos y gestionar contenedores
+liberar_puertos() {
+    local puertos=$1
+    for puerto in $puertos; do
+        echo "Liberando puerto $puerto..."
+        if lsof -i :$puerto &> /dev/null; then
+            PID=$(lsof -t -i :$puerto)
+            kill -9 $PID
+            echo "Puerto $puerto liberado. Proceso $PID detenido."
+        else
+            echo "El puerto $puerto ya está libre."
+        fi
+    done
+}
+cleanup_ports() {
+    local container_name=$1
     echo "Verificando si existe un contenedor con el nombre '${container_name}'..."
 
-    # Verificar si el contenedor está en ejecución
     if docker ps --filter "name=^${container_name}$" --format '{{.Names}}' | grep -wq "${container_name}"; then
         echo "El contenedor '${container_name}' está en funcionamiento."
-        # Obtener los puertos expuestos por el contenedor
+
+        # Obtener puertos expuestos
         exposed_ports=$(docker inspect --format '{{range .NetworkSettings.Ports}}{{.}}{{end}}' "${container_name}" | cut -d ':' -f 2 | cut -d '/' -f 1)
-        # Liberar los puertos expuestos
-        for port in $exposed_ports; do
-            echo "Liberando puerto $port..."
-            if lsof -i :$port &> /dev/null; then
-                PID=$(lsof -t -i :$port)
-                kill -9 $PID
-                echo "Proceso con PID $PID detenido y puerto $port liberado."
-            else
-                echo "El puerto $port está libre."
-            fi
-        done
-        # Detener y eliminar el contenedor
+        liberar_puertos "$exposed_ports"
+
+        # Detener y eliminar contenedor
         docker stop "${container_name}"
         docker rm "${container_name}"
         echo "Contenedor '${container_name}' detenido y eliminado."
-    
-    # Si no existe un contenedor levantado con el nombre proporcionado
     else
-        echo "No se encuentra un contenedor en ejecución con el nombre '${container_name}'."
+        echo "Contenedor '${container_name}' no encontrado. Verificando imagen..."
 
-        # Comprobar si existe una imagen con ese nombre
         if docker image ls --filter "reference=${container_name}" --format '{{.Repository}}' | grep -wq "${container_name}"; then
             echo "Imagen '${container_name}' encontrada."
-            # Obtener los puertos expuestos por la imagen
             exposed_ports=$(docker image inspect "${container_name}" --format '{{json .Config.ExposedPorts}}' | grep -oP '\d+/tcp' | cut -d '/' -f 1)
-            # Liberar los puertos expuestos
-            for port in $exposed_ports; do
-                echo "Liberando puerto $port..."
-                if lsof -i :$port &> /dev/null; then
-                    PID=$(lsof -t -i :$port)
-                    kill -9 $PID
-                    echo "Proceso con PID $PID detenido y puerto $port liberado."
-                else
-                    echo "El puerto $port está libre."
-                fi
-            done
+            liberar_puertos "$exposed_ports"
         else
-            echo "No se encontró un contenedor ni una imagen con el nombre '${container_name}'."
-            echo "Por favor, proporcione una lista de puertos a liberar (separados por comas):"
+            echo "No se encontró ni contenedor ni imagen. Solicitará puertos manualmente."
+            echo "Proporcione una lista de puertos a liberar (separados por comas):"
             read -p "Puertos: " port_list
             IFS=',' read -r -a ports <<< "$port_list"
-            for port in "${ports[@]}"; do
-                echo "Liberando puerto $port..."
-                if lsof -i :$port &> /dev/null; then
-                    PID=$(lsof -t -i :$port)
-                    kill -9 $PID
-                    echo "Proceso con PID $PID detenido y puerto $port liberado."
-                else
-                    echo "El puerto $port está libre."
-                fi
-            done
+            liberar_puertos "${ports[@]}"
         fi
     fi
 }
-
 # ==============================================
 # Función: manage_image
 # Descripción:
@@ -219,7 +207,7 @@ function cleanup_ports() {
 # ==============================================
 
 # Función para gestionar la imagen Docker
-function manage_image() {
+manage_image() {
     container_name=$1
     image_name=$2
 
@@ -230,12 +218,12 @@ function manage_image() {
         # Verificar integridad de la imagen (comprobar que se puede ejecutar un contenedor)
         if docker inspect "${image_name}" &> /dev/null; then
             echo "La imagen '${image_name}' es válida y puede usarse para crear un contenedor."
-            
+
             # Intentar ejecutar un contenedor de prueba con esta imagen
             if docker run --rm "${image_name}" echo "Contenedor de prueba ejecutado correctamente"; then
                 echo "La imagen '${image_name}' se puede ejecutar correctamente."
             else
-                echo "No se pudo ejecutar un contenedor con la imagen '${image_name}'. Deteniendo y eliminando la imagen..."
+                echo "No se pudo ejecutar un contenedor con la imagen '${image_name}'. Eliminando la imagen..."
                 docker rmi "${image_name}"
             fi
         else
@@ -243,7 +231,7 @@ function manage_image() {
             docker rmi "${image_name}"
         fi
 
-        # Verificar si hay una actualización de la imagen en el repositorio
+        # Verificar si hay una actualización de la imagen
         echo "Verificando si hay actualizaciones de la imagen '${image_name}'..."
         if docker pull "${image_name}" &> /dev/null; then
             echo "Una nueva versión de la imagen '${image_name}' está disponible."
@@ -261,7 +249,6 @@ function manage_image() {
         echo "No se encontró la imagen '${image_name}' en el repositorio local."
     fi
 }
-
 # ==============================================
 # Función: setup_docker_image
 # Descripción:
@@ -374,56 +361,39 @@ setup_docker_image() {
 # Autor: José Javier Gutiérrez Giul
 # Emails: jogugil@gmail.com, jogugi@posgrado.upv.es
 # ==============================================
-setup_docker_container() {
-    local container_name=$1
-    local image_name=$2
-    local service_url=$3
+setup_docker_image() {
+    local image_name=$1
 
-    if [ -z "$container_name" ] || [ -z "$image_name" ]; then
-        echo "Por favor, proporciona el nombre del contenedor y la imagen."
+    if [ -z "$image_name" ]; then
+        echo "Por favor, proporciona el nombre de la imagen."
         return 1
     fi
 
-    # Comprobar si el contenedor está en ejecución
-    if docker ps --filter "name=^${container_name}$" --format '{{.Names}}' | grep -wq "${container_name}"; then
-        echo "El contenedor '${container_name}' está en funcionamiento."
+    # Verificar si la imagen ya está descargada localmente
+    if docker image ls --filter "reference=${image_name}" --format '{{.Repository}}' | grep -wq "${image_name}"; then
+        echo "La imagen '${image_name}' ya está disponible localmente."
 
-        # Verificar puertos expuestos
-        if ! docker port "${container_name}" | grep -q "8080"; then
-            echo "El contenedor '${container_name}' está en funcionamiento, pero el puerto 8080 no está expuesto correctamente."
-            return 1
-        fi
-
-        echo "Todo está en orden con el contenedor y los puertos."
-    else
-        # Verificar si la imagen está descargada
-        if ! docker images --format '{{.Repository}}' | grep -wq "${image_name}"; then
-            echo "La imagen '${image_name}' no está descargada. Descargándola..."
-            docker pull "${image_name}" || { echo "Error al descargar la imagen."; return 1; }
-        fi
-
-        # Comprobar si se puede arrancar el contenedor
-        echo "Intentando arrancar el contenedor '${container_name}' desde la imagen '${image_name}'..."
-        docker run -d --name "${container_name}" "${image_name}" || { echo "No se pudo arrancar el contenedor."; return 1; }
-
-        # Verificar el estado del contenedor
-        container_status=$(docker inspect -f '{{.State.Status}}' "${container_name}")
-        if [ "$container_status" != "running" ]; then
-            echo "El contenedor '${container_name}' no está en funcionamiento. Estado: ${container_status}. Eliminando..."
-            docker rm -f "${container_name}"
-            return 1
-        fi
-
-        echo "Contenedor '${container_name}' arrancado con éxito."
-
-        # Verificar si el servicio está accesible (si se proporciona una URL)
-        if [ -n "$service_url" ]; then
-            echo "Verificando acceso al servicio en '${service_url}'..."
-            if curl -s --head --request GET "$service_url" | grep "200 OK" > /dev/null; then
-                echo "Acceso al servicio en '${service_url}' OK."
+        # Verificar si hay actualizaciones para la imagen
+        echo "Verificando si hay una actualización para la imagen '${image_name}'..."
+        if docker pull "${image_name}" &> /dev/null; then
+            echo "Una nueva versión de la imagen '${image_name}' está disponible."
+            read -p "¿Deseas actualizar a la nueva versión? (s/n): " update_response
+            if [[ "$update_response" == "s" || "$update_response" == "S" ]]; then
+                echo "Actualizando la imagen '${image_name}'..."
+                docker pull "${image_name}"
             else
-                echo "El servicio en '${service_url}' no es accesible."
+                echo "No se actualizará la imagen."
             fi
+        else
+            echo "No hay nuevas versiones de la imagen '${image_name}'."
+        fi
+    else
+        # Si la imagen no está disponible localmente, descargarla
+        echo "La imagen '${image_name}' no está disponible localmente. Descargándola..."
+        if docker pull "${image_name}"; then
+            echo "Imagen '${image_name}' descargada correctamente."
+        else
+            echo "Error al descargar la imagen '${image_name}'."
         fi
     fi
 }
@@ -450,22 +420,28 @@ priobipal() {
     fi
 
     # Leer cada línea del archivo de configuración
-    while IFS=, read -r image_name container_name expose_ports check_service service_url; do
-        # Eliminar los espacios en blanco antes y después de las variables
-        image_name=$(echo "$image_name" | xargs)
-        container_name=$(echo "$container_name" | xargs)
-        expose_ports=$(echo "$expose_ports" | xargs)
-        check_service=$(echo "$check_service" | xargs)
-        service_url=$(echo "$service_url" | xargs)
+    while IFS= read -r linea; do
+        # Extraer la imagen, el contenedor, los puertos y el servicio
+        # Se asume que la estructura de la línea es: "imagen, contenedor, [puertos], servicio, URL"
+        image_name=$(echo "$linea" | cut -d ';' -f 1 | xargs)  # Extraer imagen
+        container_name=$(echo "$linea" | cut -d ';' -f 2 | xargs)  # Extraer contenedor
+        expose_ports=$(echo "$linea" | cut -d ';' -f 3 | xargs | tr -d '[]')  # Extraer puertos (eliminando corchetes)
+        check_service=$(echo "$linea" | cut -d ';' -f 4 | xargs)  # Extraer servicio
+        service_url=$(echo "$linea" | cut -d ';' -f 5 | xargs)  # Extraer URL
 
-        # Eliminar los corchetes y espacios de la lista de puertos
-        expose_ports=$(echo "$expose_ports" | sed 's/\[//g; s/\]//g; s/ //g')
+        # Convertir los puertos en un array
+        IFS=', ' read -r -a ports_array <<< "$expose_ports"
 
-        # Convertir la lista de puertos en un formato adecuado para Docker
-        IFS=',' read -r -a ports_array <<< "$expose_ports"
+        # Mostrar los resultados
+        echo "Procesando imagen: $image_name, contenedor: $container_name"
+        echo "Puertos: ${ports_array[@]}"
+        echo "Comprobar servicio: $check_service, URL del servicio: $service_url"
+
+        # Llamar a la función que manejará cada puerto
         port_args=""
-        for port in "${ports_array[@]}"; do
-            port_args+="-p $port "
+        for puerto in "${ports_array[@]}"; do
+            echo "Procesando puerto: $puerto"
+            port_args+="-p $puerto "
         done
 
         # Mostrar la información del contenedor
@@ -503,6 +479,7 @@ priobipal() {
         fi
     done < "$config_file"
 }
+
 
 
 # Iniciar proceso

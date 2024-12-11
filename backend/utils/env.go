@@ -18,7 +18,7 @@ var once sync.Once
 func RecargarVariablesDeEntorno() {
 	// Volver a cargar las variables de entorno desde el archivo .env
 	if err := godotenv.Load(); err != nil {
-		log.Fatal("Error recargando el archivo .env")
+		log.Fatal("Error recargando el archivo .env: %w", err)
 	}
 
 	// Limpiar el mapa de variables anteriores
