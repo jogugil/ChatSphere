@@ -1,5 +1,6 @@
 # Usar una imagen base de Go para la construcción
-FROM golang:1.22 as builder
+FROM golang:1.20-bullseye AS builder
+
 
 # Establecer el directorio de trabajo en la imagen de construcción
 RUN mkdir -p /app
@@ -17,12 +18,14 @@ COPY ./backend ./
 RUN go build -o gochat-server main.go  
 RUN apt-get update && apt-get install -y netcat-openbsd
 # Imagen de producción, solo copiamos el binario compilado
+# Imagen de producción, solo copiamos el binario compilado
 FROM debian:bullseye-slim
 
 # Instalar dependencias mínimas (si es necesario)
 RUN apt-get update && apt-get install -y \
-    ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
+    libc6 \
+    netcat-openbsd \
+    && rm -rf /var/lib/apt/lists/*  # Limpiar el caché de apt para reducir el tamaño
 
 # Copiar el binario desde la imagen de construcción
 COPY --from=builder /app/gochat-server /gochat-server
