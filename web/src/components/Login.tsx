@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { login } from '../api/api';
 import { useAuth } from './AuthContext';
 import { LoginResponse } from '../types/typesComm';
-import './styles/Login.css'; // Asegúrate de tener este archivo CSS en el mismo directorio
+import '../styles/Login.css'; // Asegúrate de tener este archivo CSS en el mismo directorio
  
  
 
