@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getMessages, sendMessage, getActiveUsers } from '../api/api';
+import {  getMessages, sendMessage, getActiveUsers } from '../api/api';
 import { getToken } from '../utils/jwtUtils';
 import usePolling from '../hooks/usePolling';
 import  {Room} from '../models/Room'; // Ajusta la ruta según la estructura de tu proyecto
-import  {Message} from "../models/Message"
+import  {Message, UUID} from "../models/Message"
 import  {User} from "../models/User"
+import { MessageResponse } from '../types/typesComm';
+import { useAuth } from './AuthContext';
 
 const Chat = () => {
     const [message, setMessage] = useState('');
@@ -15,30 +17,68 @@ const Chat = () => {
     const [currentTime, setCurrentTime] = useState<string>(new Date().toLocaleString());
     const navigate = useNavigate();
   
-    const token = getToken();
-    const roomId = '12345'; // Este ID lo puedes obtener de la URL o de un contexto
-  
+     
+    const { token, nickname, roomId, roomName } = useAuth();
+    
+    // Esta función asegura que room esté inicializado antes de ser utilizado
+    useEffect(
+      () => { 
+        if (roomId && roomName && token && nickname) { 
+          const roomObj = new Room(roomId, roomName); 
+          const userObj = new User(nickname, 'someUserId', 'active', roomId, token); 
+          setRoom(roomObj); 
+          setUser(userObj); 
+          // Actualización cada minuto de la hora 
+          const interval = setInterval(() => { setCurrentTime(new Date().toLocaleString()); }, 60000); 
+          // Limpiar el intervalo cuando el componente se desmonte 
+          return () => clearInterval(interval); } 
+      }, [roomId, roomName, token, nickname]);
+
     if (!token) {
-      navigate('/'); // Redirige al login si no hay token
-      return null;
+        navigate('/'); // Redirige al login si no hay token
+        return null;
     }
-  
+    
+
+    // Función para actualizar la lista de mensajes con nuevos mensajes
+    const updateMessagesFromPolling = (newListMessages: string) => {
+        if (room && room.updateMessages) {
+            room.updateMessages(newListMessages); // Llamar al método updateMessages de la clase Room
+        }
+    };
+    const updateUsersFromPolling = (newListMessages: string) => {
+      if (room && room.addUsersFromJson) {
+          room.addUsersFromJson(newListMessages); // Llamar al método updateMessages de la clase Room
+      }
+  };
+    
     // Obtiene los mensajes y usuarios activos
     // Hook para realizar el polling cada 5 segundos
-    usePolling(() => getMessages(token, roomId, lastSeenMessageId), updateMessages, 5000);
-    usePolling(() => getActiveUsers(token, roomId), (users: React.SetStateAction<User[]>) => setActiveUsers(users), 5000);
-  
-    // Obteniendo los detalles de la sala (nombre, número de usuarios, etc.)
-    useEffect(() => {
-      // Simulamos obtener los detalles de la sala (esto sería de una API)
-      setRoom({
-        idRoom: roomId,
-        nombre: 'El Refugio Digital',
-      });
-      // Actualización cada minuto de la hora
-      const interval = setInterval(() => setCurrentTime(new Date().toLocaleString()), 60000);
-      return () => clearInterval(interval); // Limpiar el intervalo al desmontarse el componente
-    }, []);
+    // Hook para obtener los mensajes, solo si room no es null
+    usePolling(
+      () => {
+        if (room && room.lastIDMessageId) {
+          // Llama a la función para obtener mensajes de la sala
+          return getMessages(token, room.idRoom, room.lastIDMessageId);
+        }
+        return null; // Devuelve null si room es null
+      },
+      updateMessagesFromPolling,  // Esta función es el callback para actualizar los mensajes
+      5000 // Intervalo en milisegundos (5 segundos)
+    );   
+    
+    // Hook para obtener los usuarios activos, solo si roomId está disponible
+    usePolling(
+      () => {
+        if (room) {
+          return getActiveUsers(token, room._idRoom); // Usa el id de la sala para obtener los usuarios activos
+        }
+        return null; // Devuelve null si room es null
+      },
+      updateUsersFromPolling,  // Esta función es el callback para actualizar los mensajes
+      5000 // Intervalo en milisegundos (5 segundos)
+    )  
+    
   
     const handleSendMessage = async () => {
       if (message.trim() === '') return;
@@ -60,45 +100,9 @@ const Chat = () => {
       return `${date.toLocaleDateString()} ${date.toLocaleTimeString()} - ${msg.nickname}: ${msg.message}`;
     };
       
-    // Función para actualizar la lista de mensajes con nuevos mensajes
-    const updateMessages = (newMessages) => {
-        // Puedes hacer un merge de los mensajes antiguos con los nuevos
-        setMessages((prevMessages) => [...prevMessages, ...newMessages]);
-    };
-    // Función que realiza la petición para obtener los mensajes
-    const getMessages = async (token, roomId, lastSeenMessageId) => {
-        try {
-        setLoading(true);
-        const response = await fetch('/api/getMessages', {
-            method: 'POST',
-            headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-            roomId: roomId,
-            lastSeenMessageId: lastSeenMessageId,
-            }),
-        });
 
-        if (!response.ok) {
-            throw new Error('Failed to fetch messages');
-        }
 
-        const data = await response.json();
-        return data.messages; // Asumiendo que los mensajes vienen en la propiedad 'messages'
-        } catch (error) {
-        console.error('Error fetching messages:', error);
-        } finally {
-        setLoading(false);
-        }
-    };
-
-    // Función para actualizar la lista de mensajes con nuevos mensajes
-    const updateMessages = (newMessages) => {
-        // Puedes hacer un merge de los mensajes antiguos con los nuevos
-        setMessages((prevMessages) => [...prevMessages, ...newMessages]);
-    };
+ 
     return (
       <div className="chat-container">
         <div className="left-sidebar">
@@ -154,3 +158,12 @@ const Chat = () => {
   };
   
   export default Chat;
+
+function setUser(userObj: User) {
+  throw new Error('Function not implemented.');
+}
+
+
+function setLoading(arg0: boolean) {
+  throw new Error('Function not implemented.');
+}

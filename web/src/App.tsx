@@ -1,8 +1,8 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
-import Login from './components/Login';
-import Chat from './components/Chat';
+import Login from './components/Login'; // Asegúrate de que la ruta sea correcta
+import Chat from './components/Chat';  // Asegúrate de que la ruta sea correcta
 
 function App() {
   return (
@@ -16,3 +16,4 @@ function App() {
 }
 
 export default App;
+

@@ -38,6 +38,7 @@ export class Message implements MessageData {
         }
         this._idRoom = value; // Si la validación pasa, asigna el valor
     }
+    
   }
   // const msg = new Message('usuario1', 'Hola, ¿cómo estás?', new Date().toISOString(), '123e4567-e89b-12d3-a456-426614174000');
   // const msg = new Message('usuario2', '¡Hola!', new Date().toISOString(), 'invalid-uuid');
