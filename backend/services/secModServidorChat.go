@@ -76,20 +76,20 @@ func (secMod *SecModServidorChat) EjecutarLogin(nickname string) (*entities.Usua
 
 	// Llamar a RegistrarUsuario para asegurarnos de que el usuario esté registrado
 	if !secMod.GestionUsuarios.VerificarUsuarioExistente(nickname) {
-		fmt.Println("EjecutarLogin:El nickname ya está en uso")
-		return nil, fmt.Errorf("EjecutarLogin:el nickname ya está en uso")
+		fmt.Println("EjecutarLogin: CODL00:El nickname ya está en uso")
+		return nil, fmt.Errorf("EjecutarLogin: CODL00:el nickname ya está en uso")
 	}
 
 	token := secMod.CrearTokenSesion(nickname)
 	if token == "" {
-		fmt.Println("EjecutarLogin: No se pudo crear el token")
-		return nil, fmt.Errorf("EjecutarLogin: no se pudo crear el token")
+		fmt.Println("EjecutarLogin: CODL01:No se pudo crear el token")
+		return nil, fmt.Errorf("EjecutarLogin: CODL01:no se pudo crear el token")
 	}
 
 	newUser, err := secMod.GestionUsuarios.RegistrarUsuario(nickname, token, secMod.GestionSalas.SalaPrincipal)
 	if err != nil {
-		fmt.Printf("EjecutarLogin: Error al registrar el usuario: %v\n", err)
-		return nil, fmt.Errorf("EjecutarLogin:error al registrar el usuario %v", err)
+		fmt.Printf("EjecutarLogin:CODL02:  Error al registrar el usuario: %v\n", err)
+		return nil, fmt.Errorf("EjecutarLogin: CODL02: error al registrar el usuario %v", err)
 	}
 
 	secMod.GestionSalas.SalaPrincipal.Usuarios = append(secMod.GestionSalas.SalaPrincipal.Usuarios, *newUser)
@@ -113,31 +113,31 @@ func (secMod *SecModServidorChat) EjecutarEnvioMensaje(nickname, token, mensaje 
 	token_usuario, err := secMod.GestionUsuarios.ObtenerTokenDeUsuario(nickname)
 	if err != nil {
 		fmt.Println("EjecutarEnvioMensaje: Token inválido o acción no permitida")
-		return errors.New("token inválido o acción no permitida")
+		return errors.New("EjecutarEnvioMensaje: CODM00:token inválido o acción no permitida")
 	}
 
 	if !secMod.ValidarTokenAccion(token_usuario, nickname, "enviarMensaje") {
 		fmt.Println("EjecutarEnvioMensaje: Token inválido o acción no permitida")
-		return errors.New("token inválido o acción no permitida")
+		return errors.New("EjecutarEnvioMensaje: CODM01:token inválido o acción no permitida")
 	}
 
 	if token_usuario != token {
 		fmt.Println("EjecutarEnvioMensaje: Token no coincide")
-		return errors.New("EjecutarEnvioMensaje: token inválido o acción no permitida")
+		return errors.New("EjecutarEnvioMensaje: CODM02:token inválido o acción no permitida")
 	}
 	usuario, err := secMod.GestionUsuarios.BuscarUsuarioPorToken(token_usuario)
 	if err != nil {
-		fmt.Printf("EjecutarEnvioMensaje: Error al BuscarUsuarioPorToken  : %v\n", err)
+		fmt.Printf("EjecutarEnvioMensaje: CODM03:Error al BuscarUsuarioPorToken  : %v\n", err)
 		return err
 	}
 	// Llamar a la lógica para enviar el mensaje
 	err = secMod.GestionSalas.EnviarMensaje(idSala, nickname, mensaje, usuario)
 	if err != nil {
-		fmt.Printf("EjecutarEnvioMensaje: Error al enviar el mensaje: %v\n", err)
+		fmt.Printf("EjecutarEnvioMensaje: CODM04: Error al enviar el mensaje: %v\n", err)
 		return err
 	}
 
-	fmt.Printf("EjecutarEnvioMensaje: Mensaje enviado por %s: %s\n", nickname, mensaje)
+	fmt.Printf("EjecutarEnvioMensaje: CODM05:Mensaje enviado por %s: %s\n", nickname, mensaje)
 	return nil
 }
 

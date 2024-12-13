@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -52,17 +53,35 @@ func LoginHandler(c *gin.Context) {
 		// Log del error en el proceso de login
 		fmt.Printf("Error al ejecutar login para el usuario: %v", err)
 
-		// Si hay un error al hacer login, devolver el error con status 400
-		c.JSON(http.StatusBadRequest, gin.H{
-			"status":  "nok",
-			"message": err.Error(),
-		})
+		// Crear un objeto de respuesta con campos vacíos
+		responseData := gin.H{
+			"status":   "",
+			"message":  "",
+			"token":    "",
+			"nickname": "",
+			"idsala":   "",
+			"namesala": "",
+		}
+
+		// Verificar si el error contiene el código específico de nickname en uso
+		if strings.Contains(err.Error(), "CODL00") {
+			// Actualizar el objeto de respuesta para el caso de nickname en uso
+			responseData["status"] = "nickname_taken"
+			responseData["message"] = "El nickname ya está en uso"
+			c.JSON(http.StatusOK, responseData)
+		} else {
+			// Actualizar el objeto de respuesta para errores genéricos
+			responseData["status"] = "nok"
+			responseData["message"] = err.Error()
+			c.JSON(http.StatusBadRequest, responseData)
+		}
+
 		return
 	}
 
 	// Log de los datos del usuario después del login
 	fmt.Printf("Login exitoso. Datos del usuario: Token: %s, Nickname: %s, Sala ID: %v, Sala Name: %s\n",
-		usuario.Token, usuario.Nickname, usuario.IdSala , usuario.NameSala)
+		usuario.Token, usuario.Nickname, usuario.IdSala, usuario.NameSala)
 
 	// Responder con un JSON de éxito si el login es exitoso
 	responseData := gin.H{

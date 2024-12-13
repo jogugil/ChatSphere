@@ -1,5 +1,6 @@
 import { UUID } from "../models/User";
 
+export const TOKEN_NULO = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIwIiwidXNlcm5hbWUiOiJkZWZhdWx0IiwiZXhwIjoxNjk4Mzg2Mjc5fQ.MGkJd5EYHQffQ9jrUzX7Djgmd4mOuH3aPRvcOP61TnM";
 // Estructura de la respuesta
 export interface MessageResponse {
     status: string;
@@ -22,7 +23,7 @@ export interface  UsuarioActivo {
     HoraUltimaAccion: string;
   };
   
-  export interface ResponseUser  {
+export interface ResponseUser  {
     Status: string;
     Message: string;
     TokenSesion: string;
@@ -32,11 +33,17 @@ export interface  UsuarioActivo {
   };
 
 
-  export interface LoginResponse {
+export interface LoginResponse {
     status: string;
     message: string;
     token: string;
     nickname: string;
     idsala: UUID;
     namesala: string;
+  }
+
+export interface JwtPayload {
+    userId: string;
+    username: string;
+    exp?: number;  // La expiración es opcional
   }

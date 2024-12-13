@@ -13,28 +13,60 @@ interface UsersResponse {
 }
  
 
+ 
 
-// Login: obtiene un token JWT
 export const login = async (nickname: string): Promise<LoginResponse> => {
+  const apiUrl = import.meta.env.VITE_API_URL;
+
   try {
     const response = await axios.post(
       `${apiUrl}/login`,
       JSON.stringify({ nickname }),
-      { 
-        headers: { 
-          'Content-Type': 'application/json'
-        } 
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'x-gochat': apiUrl,
+        },
       }
     );
 
-    const data = response.data as LoginResponse; // Procesar el JSON y convertirlo a LoginResponse
-    return data;
-  } catch (error) {
+    const data = response.data;
+
+    // Asegurar un LoginResponse consistente
+    return {
+      status: data.status || 'nok',
+      message: data.message || 'Error desconocido',
+      token: data.token || '',
+      nickname: data.nickname || nickname,
+      idsala: data.idsala || '',
+      namesala: data.namesala || '',
+    } as LoginResponse;
+  } catch (error: any) {
     console.error('Error during login:', error);
-    throw new Error('Login failed');
+
+    // Detectar errores específicos
+    if (error.code === 'ERR_NETWORK') {
+      return {
+        status: 'nok',
+        message: 'El servidor GoChat no está disponible. Disculpe las molestias.',
+        token: '',
+        nickname: nickname,
+        idsala: '',
+        namesala: '',
+      } as LoginResponse;
+    }
+
+    // Manejar otros errores genéricos
+    return {
+      status: 'nok',
+      message: 'Error durante el login. Inténtelo de nuevo más tarde.',
+      token: '',
+      nickname: nickname,
+      idsala: '',
+      namesala: '',
+    } as LoginResponse;
   }
 };
- 
 
 // Enviar mensaje
 export const sendMessage = async (token: string, roomId: string, message: string) => {

@@ -8,7 +8,7 @@ import  {Message, UUID} from "../models/Message"
 import  {User} from "../models/User"
 import { MessageResponse } from '../types/typesComm';
 import { useAuth } from './AuthContext';
-
+import '../styles/chat.css';
 const Chat = () => {
     const [message, setMessage] = useState('');
     const [messages, setMessages] = useState([]);
@@ -105,6 +105,7 @@ const Chat = () => {
  
     return (
       <div className="chat-container">
+        {/* Columna izquierda con información */}
         <div className="left-sidebar">
           <h2>GoChat ZeroMq</h2>
           <p>{currentTime}</p>
@@ -122,7 +123,8 @@ const Chat = () => {
           </div>
           <footer>© SmartIAServices, {new Date().getFullYear()}</footer>
         </div>
-  
+    
+        {/* Columna central de mensajes */}
         <div className="chat-room">
           <div className="messages-display">
             <h3>Mensajes</h3>
@@ -144,7 +146,8 @@ const Chat = () => {
             <button onClick={handleSendMessage}>Enviar</button>
           </div>
         </div>
-  
+    
+        {/* Columna derecha de usuarios */}
         <div className="right-sidebar">
           <h3>Usuarios en la sala</h3>
           <ul>

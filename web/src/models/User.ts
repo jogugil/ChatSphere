@@ -1,21 +1,17 @@
 // user.ts
 
-import jwt, { JwtPayload } from 'jsonwebtoken'; // Utilizanmos jsonwebtoken para manejar JWT
+import { jwtDecode } from "jwt-decode"; 
 import { UserChat } from '../types/types';      
 import { validate as validateUUID } from 'uuid';
-
-// Definir la interfaz del payload del token
-const payload = {
-    userId: "0", // ID del usuario en cero
-    username: "default", // Nombre de usuario en cero
-    exp: Math.floor(Date.now() / 1000) + 60 * 60 *24, // Expiración en 1 día (el tiempo actual + 24 horas)
-  };
+import { TOKEN_NULO } from '../types/typesComm';
+import {JwtPayload} from "../types/typesComm"
+ 
 export type UUID = string;
 export class User {
   nickname: string;
   id: string;
   status: string;
-  private _token: string = jwt.sign(payload, "nulo");;
+  private _token: string = TOKEN_NULO;
   private _idRoom: UUID = "00000000-0000-0000-0000-000000000000"; 
 
   constructor(nickname: string, id: string, status: string, idRoom: string, token: string) {
@@ -24,7 +20,7 @@ export class User {
     this.status = status;
     this.idRoom = idRoom; // Esto llamará al setter que valida el UUID
     if (token) {        
-        this.token = jwt.sign(payload, "nulo" );
+        this.token = TOKEN_NULO;
     } else  {
         this.token = token;
     }
@@ -45,7 +41,7 @@ export class User {
   // Método para validar si el token es válido
   private isValidToken(token: string): boolean {
     try {
-      const decoded = jwt.decode(token) as JwtPayload;
+      const decoded = <JwtPayload>jwtDecode(token);
       return decoded != null && this.tokenIsValid(decoded.exp);
     } catch (error) {
       console.error('Error al validar el token:', error);
@@ -68,7 +64,7 @@ export class User {
   // Método para obtener el ID del usuario decodificado desde el token
   getUserIdFromToken(): string | null {
     try {
-      const decoded = jwt.decode(this._token) as JwtPayload;
+      const decoded = <JwtPayload>jwtDecode(this._token);
       return decoded ? decoded.userId : null;
     } catch (error) {
       console.error('Error al obtener el ID del token:', error);

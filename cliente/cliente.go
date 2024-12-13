@@ -69,8 +69,19 @@ func login(nickname string) (LoginResponse, error) {
 		return LoginResponse{}, err
 	}
 
-	// Hacer la petición HTTP para login
-	resp, err := http.Post("http://localhost:8081/login", "application/json", bytes.NewBuffer(jsonData))
+	// Crear la solicitud HTTP
+	req, err := http.NewRequest("POST", "http://localhost:8081/login", bytes.NewBuffer(jsonData))
+	if err != nil {
+		return LoginResponse{}, err
+	}
+
+	// Añadir la cabecera 'x-gochat' con el valor 'http://localhost:8081'
+	req.Header.Set("x-gochat", "http://localhost:8081")
+	req.Header.Set("Content-Type", "application/json")
+
+	// Hacer la petición HTTP
+	client := &http.Client{}
+	resp, err := client.Do(req)
 	if err != nil {
 		return LoginResponse{}, err
 	}
@@ -100,8 +111,19 @@ func enviarMensaje(token, idsala, nickName, mensaje string) error {
 		return err
 	}
 
-	// Hacer la petición HTTP para enviar el mensaje
-	resp, err := http.Post("http://localhost:8081/newmessage", "application/json", bytes.NewBuffer(jsonData))
+	// Crear la solicitud HTTP
+	req, err := http.NewRequest("POST", "http://localhost:8081/newmessage", bytes.NewBuffer(jsonData))
+	if err != nil {
+		return err
+	}
+
+	// Añadir la cabecera 'x-gochat' con el valor 'http://localhost:8081'
+	req.Header.Set("x-gochat", "http://localhost:8081")
+	req.Header.Set("Content-Type", "application/json")
+
+	// Hacer la petición HTTP
+	client := &http.Client{}
+	resp, err := client.Do(req)
 	if err != nil {
 		return err
 	}
@@ -111,13 +133,25 @@ func enviarMensaje(token, idsala, nickName, mensaje string) error {
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("error al enviar el mensaje, status: %s", resp.Status)
 	}
+
 	return nil
 }
-
 func conectarWebSocket() (*websocket.Conn, error) {
 	// Intentar reconectar en caso de desconexión
 	for {
-		conn, _, err := websocket.DefaultDialer.Dial("ws://localhost:8081/ws", nil)
+		// Crear la solicitud HTTP personalizada para WebSocket
+		req, err := http.NewRequest("GET", "ws://localhost:8081/ws", nil)
+		if err != nil {
+			log.Printf("Error al crear la solicitud HTTP: %v", err)
+			time.Sleep(2 * time.Second)
+			continue
+		}
+
+		// Añadir la cabecera 'x-gochat' con el valor 'http://localhost:8081'
+		req.Header.Set("x-gochat", "http://localhost:8081")
+
+		// Establecer la conexión WebSocket con la solicitud personalizada
+		conn, _, err := websocket.DefaultDialer.Dial(req.URL.String(), req.Header)
 		if err != nil {
 			log.Printf("Error al conectar WebSocket, reintentando: %v", err)
 			time.Sleep(2 * time.Second)
@@ -164,6 +198,7 @@ func obtenerMensajes(conn *websocket.Conn, nickname, idsala, token, ultimoIdMens
 	}
 	return mensajeIndividual.ListMessage, nil
 }
+
 func obtenerUsuarios(conn *websocket.Conn, nickname, idsala, token string) (ResponseUser, error) {
 	// Declarar la estructura RequestUserData fuera de la llamada de la función
 	requestData := struct {

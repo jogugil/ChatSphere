@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 )
@@ -25,24 +26,26 @@ var upgrader = websocket.Upgrader{
 func main() {
 	log.SetFlags(log.Lshortfile)
 	utils.CargarVariablesDeEntorno()
-	// Creamos un nuevo gestor de salas dentro del singleton que ocntrola lalogica del servidor
-	// Obtener la instancia del singleton
-	uriMongo, err := utils.ObtenerVariableDeEntorno("URIMongo")
 
+	// Configuración de la base de datos
+	uriMongo, err := utils.ObtenerVariableDeEntorno("URIMongo")
 	if err != nil {
 		log.Fatalf("Error al iniciar el servidor de BD.  URIMongo no configurado: %v", err)
 		uriMongo = "mongodb://localhost:27017" // Valor por defecto si no se configura
 	}
+
 	nameMongo, err := utils.ObtenerVariableDeEntorno("SizeQueue")
 	if err != nil {
 		log.Fatalf("Error al iniciar el servidor. Nombre del servidor no configurado: %v", err)
 		nameMongo = "MongoChat" // Valor por defecto si no se configura
 	}
+
 	persistencia, err := persistence.NuevaMongoPersistencia(uriMongo, nameMongo)
 	if err != nil {
-		log.Fatalf("Error al iniciar el servidor de BAse de datos. Pool de conexiones fallida: %v", err)
+		log.Fatalf("Error al iniciar el servidor de Base de datos. Pool de conexiones fallida: %v", err)
 		return
 	}
+
 	secMod := services.CrearSecModServidorChat(persistencia, "salas_config.json")
 	salasManager := secMod.GestionSalas
 
@@ -56,27 +59,53 @@ func main() {
 
 	r := gin.Default()
 
+	// Middleware CORS
+	r.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"*"}, // Cambia "*" por tus orígenes permitidos, por ejemplo, "http://localhost:3000"
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "x-gochat"},
+		AllowCredentials: true,
+	}))
+
+	// Middleware para comprobar el encabezado "x-gochat" en cada solicitud
+	r.Use(func(c *gin.Context) {
+		// Obtener el valor del encabezado "x-gochat"
+		goChatHeader := c.GetHeader("x-gochat")
+		if goChatHeader == "" {
+			// Si no está presente, devolver error y detener la ejecución
+			c.JSON(http.StatusBadRequest, gin.H{
+				"status":  "nok",
+				"message": "Falta el parámetro 'x-gochat' en la solicitud",
+			})
+			c.Abort() // Detener el procesamiento de la solicitud
+			return
+		}
+		log.Printf("Servidor goChatHeader en %s", goChatHeader)
+		// Si el encabezado está presente, continuar con la solicitud
+		c.Next()
+	})
+
 	// Configurar las rutas para la API REST
 	r.POST("/login", api.LoginHandler)
 	r.POST("/newmessage", api.NewMessageHandler)
 
 	// Configurar WebSocket para manejar las conexiones
 	r.GET("/ws", comm.WebSocketHandler)
-	// Configura las rutas de la aplicación
+
+	// Configuración del servidor
 	server, err := utils.ObtenerVariableDeEntorno("NameServer")
 	if err != nil {
 		log.Fatalf("Error al iniciar el servidor. Nombre del servidor no configurado: %v", err)
 		server = "localhost" // Valor por defecto si no se configura
 	}
 
-	// Inicia el servidor en el puerto 8081
 	port, err := utils.ObtenerVariableDeEntorno("PortServer")
 	if err != nil {
 		port = "8081"
 		log.Fatalf("Error al iniciar el servidor: %v", err)
 	}
 
-	// Pasar las variables de entorno a la función que inicia el servidor
+	// Dirección completa para iniciar el servidor
 	address := fmt.Sprintf("%s:%s", server, port)
 	log.Printf("Servidor escuchando en %s", address)
 
@@ -88,6 +117,6 @@ func main() {
 		}
 	}()
 
-	// Puedes poner más lógica aquí si necesitas un servidor HTTP y WebSocket independiente
+	// Mantener el servidor activo
 	select {} // Mantener el servidor activo
 }

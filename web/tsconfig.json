@@ -1,29 +1,23 @@
-{
+{ 
   "compilerOptions": {
- 
-   
-    "allowJs": true, // Permite que TypeScript procese archivos .js
-    "checkJs": false, // Evita errores estrictos en archivos .js
-    "strict": true, // Opcional: activa comprobaciones estrictas
- 
- 
- "module": "ESNext",
+    "allowJs": true,
+    "checkJs": false,
+    "strict": true,
+"lib": ["dom", "esnext"],
+    "module": "ESNext",
     "moduleResolution": "Node",
     "jsx": "react-jsx",
     "baseUrl": "./src",
- 
+    
     "outDir": "./dist",
- 
-    "target": "esnext",
- 
+    
+    "target": "esnext",    
+    
     "esModuleInterop": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "typeRoots": ["node_modules/@types"],
+    "types": ["vite/client", "node"]
   },
-  "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
-  },
-  "include": ["src/**/*" , "vite.config.ts"], 
-  "exclude": ["node_modules"] 
+  "include": ["src/**/*", "vite.config.ts"],
+  "exclude": ["node_modules"]
 }

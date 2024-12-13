@@ -7,7 +7,6 @@ const root = ReactDOM.createRoot(rootElement);
 
 root.render(
   <React.StrictMode>
-    <h1>¡Hola desde index.tsx!</h1>
     <App/>
   </React.StrictMode>
 );

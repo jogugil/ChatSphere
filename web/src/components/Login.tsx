@@ -3,67 +3,111 @@ import { useNavigate } from 'react-router-dom';
 import { login } from '../api/api';
 import { useAuth } from './AuthContext';
 import { LoginResponse } from '../types/typesComm';
-import '../styles/Login.css'; // Asegúrate de tener este archivo CSS en el mismo directorio
- 
- 
+import '../styles/login.css';
 
 const Login: React.FC = () => {
-  const [nickname, setNickname] = useState<string>('');
+  const [nicknamelogin, setNickname] = useState<string>('');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [showError, setShowError] = useState<boolean>(false);
+  const [minimized, setMinimized] = useState<boolean>(false);
+
+  const navigate = useNavigate();
+  const { setNickname: setAuthNickname, setToken } = useAuth();
 
   const handleLogin = async () => {
+    console.log("Intentando iniciar sesión...");
+
     try {
-      const response: LoginResponse = await login(nickname);
-      setToken(response.token);
-      setNickname(response.nickname);
-      setRoomId(response.idsala);
-      setRoomName(response.namesala);
+      const response: LoginResponse = await login(nicknamelogin);
+      console.log(response);
+
+      if (response.status === 'nickname_taken') {
+        setErrorMessage('El nickname ya está en uso. Intenta con otro.');
+        setShowError(true);
+        console.log("Mostrar error: Nickname ya en uso");
+        return;
+      }
+
+      if (response.status === 'nok') {
+        setErrorMessage(response.message || 'Error desconocido al iniciar sesión.');
+        setShowError(true);
+        console.log("Mostrar error: Error desconocido");
+        return;
+      }
+
+      if (response.status === 'ok') {
+        setAuthNickname(nicknamelogin);
+        setToken(response.token);
+        navigate('/chat');
+      }
     } catch (error) {
-      console.error('Error during login:', error);
+      setErrorMessage('Hubo un error al intentar iniciar sesión. Intenta de nuevo.');
+      setShowError(true);
+      console.log("Mostrar error: Error al iniciar sesión");
     }
   };
+
+  const closeErrorMessage = () => setShowError(false);
+  const minimizeErrorMessage = () => setMinimized(true);
+  const restoreErrorMessage = () => setMinimized(false);
 
   return (
     <div className="login-container">
       <div className="left-column">
-        <div className="logo">Gochat</div>
-        <div className="banners">
-          <p>Banner 1</p>
-          <p>Banner 2</p>
-        </div>
+        <div className="logo">ChatSphere</div>
+        <div className="subtitle">GoChat ZeroMQ</div>
         <div className="footer">
-          <p>&copy; 2024 Gochat</p>
+          <p>&copy; 2024 SmartIAService's</p>
           <p>{new Date().toLocaleDateString()}</p>
         </div>
       </div>
+
       <div className="right-column">
         <div className="login-box">
           <h2>Iniciar sesión</h2>
-          <p>Bienvenido a Gochat, introduce tu nickname para comenzar.</p>
           <input
             type="text"
             placeholder="Introduce tu nickname"
-            value={nickname}
+            value={nicknamelogin}
             onChange={(e) => setNickname(e.target.value)}
+            className="nickname-input"
+            disabled={showError}  // Deshabilita el formulario si hay un error
           />
-          <button onClick={handleLogin}>Iniciar sesión</button>
+          <button onClick={handleLogin} disabled={showError}>Iniciar sesión</button>  {/* Deshabilita el botón si hay un error */}
         </div>
+
+        {showError && (
+          <div className="message-window">
+            <div className="header">
+              <span className="title">Error</span>
+              <div className="controls">
+                {/* Aquí se muestra solo el botón de maximizar cuando está minimizado */}
+                {minimized ? (
+                  <button onClick={restoreErrorMessage} title="Maximizar">
+                    ⬜
+                  </button>
+                ) : (
+                  <button onClick={minimizeErrorMessage} title="Minimizar">
+                    _
+                  </button>
+                )}
+                <button onClick={closeErrorMessage} title="Cerrar">
+                  X
+                </button>
+              </div>
+            </div>
+            {!minimized && (
+              <div className="content">
+                <p>{errorMessage}</p>
+                {/* Botón Ok para cerrar la ventana */}
+                <button className="ok-button" onClick={closeErrorMessage}>Ok</button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
 };
 
 export default Login;
-
-function setToken(token: string) {
-  throw new Error('Function not implemented.');
-}
-
-
-function setRoomId(idsala: string) {
-  throw new Error('Function not implemented.');
-}
-
-
-function setRoomName(namesala: string) {
-  throw new Error('Function not implemented.');
-}
