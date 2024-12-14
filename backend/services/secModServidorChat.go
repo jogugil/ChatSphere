@@ -93,8 +93,8 @@ func (secMod *SecModServidorChat) EjecutarLogin(nickname string) (*entities.Usua
 	}
 
 	secMod.GestionSalas.SalaPrincipal.Usuarios = append(secMod.GestionSalas.SalaPrincipal.Usuarios, *newUser)
-	newUser.IdSala = secMod.GestionSalas.SalaPrincipal.ID
-	newUser.NameSala = secMod.GestionSalas.SalaPrincipal.Name
+	newUser.RoomId = secMod.GestionSalas.SalaPrincipal.ID
+	newUser.RoomName = secMod.GestionSalas.SalaPrincipal.Name
 
 	// Mostrar el mensaje de éxito
 	fmt.Printf("EjecutarLogin: Usuario %s logueado con el token %s\n", nickname, token)

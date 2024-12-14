@@ -1,36 +1,36 @@
 import { validate as validateUUID } from 'uuid';
 import { RoomChat } from '../types/types'; // Ajusta la ruta según la estructura de tu proyecto
 import { MessageResponse, MessageList } from '../types/typesComm'; // Ajusta la ruta según la estructura de tu proyecto
-import { ResponseUser, UsuarioActivo } from '../types/typesComm'; // Ajusta la ruta según la estructura de tu proyecto
+import { ResponseUser, UsersAlive } from '../types/typesComm'; // Ajusta la ruta según la estructura de tu proyecto
 import { Message } from '../models/Message'; // Ajusta la ruta según la estructura de tu proyecto
 
 export type UUID = string;
 
 // Clase Room que implementa la interfaz RoomChat y valida el idRoom
 export class Room implements RoomChat {
-  _idRoom: UUID = "00000000-0000-0000-0000-000000000000"; 
+  _roomId: UUID = "00000000-0000-0000-0000-000000000000"; 
   nombre: string;
   usuarios: string[];
   messages: Message[] = [];
   private lastIdMessage: UUID | null = null;
 
-  constructor(idRoom: string, nombre: string) {
-    this.idRoom = idRoom; // Valida el ID de la sala al inicializar
+  constructor(roomId: string, nombre: string) {
+    this.roomId = roomId; // Valida el ID de la sala al inicializar
     this.nombre = nombre;
     this.usuarios = []; // Inicializa la lista de usuarios vacía
   }
 
   // Getter y Setter para idRoom
-  get idRoom(): UUID {
-    return this._idRoom;
+  get roomId(): UUID {
+    return this._roomId;
   }
 
-  set idRoom(value: string) {
+  set roomId(value: string) {
     // Utilizando validateUUID del paquete uuid
     if (!validateUUID(value)) {
       throw new Error('El ID de la sala no es un UUID válido');
     }
-    this._idRoom = value; // Si la validación pasa, asigna el valor
+    this._roomId = value; // Si la validación pasa, asigna el valor
   }
 
   // Getter y Setter para nombre
@@ -93,17 +93,17 @@ export class Room implements RoomChat {
       const response: ResponseUser = JSON.parse(json);
 
       // Validamos que la sala del JSON coincida con la sala de la instancia
-      if (response.IdSala !== this.idRoom) {
+      if (response.roomId !== this.roomId) {
         console.log("La sala en el JSON no coincide con la sala de la instancia.");
         return;
       }
 
       // Añadir los usuarios activos a la lista de usuarios de la sala
-      response.UsuariosActivos.forEach(usuario => {
-        this.addUser(usuario.Nickname); // Añade cada usuario a la sala
+      response.usersAlive.forEach(usuario => {
+        this.addUser(usuario.nickname); // Añade cada usuario a la sala
       });
 
-      console.log(`${response.UsuariosActivos.length} usuarios añadidos a la sala.`);
+      console.log(`${response.usersAlive.length} usuarios añadidos a la sala.`);
     } catch (error) {
       console.error("Error al procesar el JSON:", error);
     }
@@ -121,7 +121,7 @@ export class Room implements RoomChat {
       }
 
       // Verificamos si el idSala coincide
-      if (response.idSala !== this.idRoom) {
+      if (response.idSala !== this.roomId) {
           console.log("El idSala no coincide.");
           return;
       }
@@ -131,18 +131,18 @@ export class Room implements RoomChat {
           // Añadimos todos los mensajes a la lista de mensajes
           response.ListMessage.forEach((msg: MessageList) => {
               const message = new Message(
-                  msg.nickname,
-                  msg.texto,
+                  msg.nickName,
+                  msg.message,
                   new Date().toISOString(), // Asignamos la fecha actual como timestamp
-                  msg.idMensaje,
-                  this.idRoom
+                  msg.idMessage,
+                  this.roomId
               );
               this.messages.push(message); // Guardamos todos los mensajes
           });
 
           // Extraemos el último mensaje de la lista y actualizamos el id
           const lastMessage = response.ListMessage[response.ListMessage.length - 1];
-          this.lastIDMessageId = lastMessage.idMensaje; // Actualizamos solo el último id de mensaje
+          this.lastIDMessageId = lastMessage.idMessage; // Actualizamos solo el último id de mensaje
       }
   }
 

@@ -20,6 +20,8 @@ npm install react-router-dom axios jsonwebtoken uuid
 npm install eslint@^8.0.0 --save-dev
 npm install eslint-plugin-prettier@^5.0.0 --save-dev
 npm install eslint-config-prettier@^8.0.0 --save-dev
+npm install typescript --save-dev
+npm install --save @fortawesome/fontawesome-free
 
 # Instalar los tipos para react-router-dom y vite
 npm install @types/react-router-dom --save-dev

@@ -5,74 +5,215 @@
   padding: 20px;
   gap: 20px;
 }
+.chat-left-column,
+.chat-right-column {
+  flex: 1; /* Permite que las columnas ocupen el mismo espacio disponible */
+  min-width: 200px; /* Asegura un tamaño mínimo para cada columna */
+  max-width: 50%; /* Asegura que ninguna columna ocupe más del 50% del contenedor */
+  box-sizing: border-box; /* Asegura que padding y border no afecten al tamaño */
+  padding: 10px; /* Espaciado interno para cada columna */
+}
 
-/* Columna izquierda */
-.left-sidebar {
-  flex: 1;
-  background-color: #f4f4f4;
-  padding: 20px;
+/********************************************************/
+/***************  COLUMNA IZQUIERDA   ******************/
+/********************************************************/
+
+/* Contenedor principal */
+.chat-left-column {
+  display: flex;
+  flex-direction: column; /* Los elementos se apilan verticalmente */
+  background-color: #2c3e50;
+  color: white;
+  width: 250px; /* Fija el ancho de la columna */
+  max-width: 250px; /* Evita que crezca más allá de este tamaño */
   border-radius: 8px;
-  height: 100vh;
+  border: 2px solid #2c3e50;
+  justify-content: space-between;
+  padding: 20px;
+  height: 90vh;
   position: sticky;
   top: 0;
+  box-sizing: border-box;
+  z-index: 10;
+  overflow: hidden; /* Evita desbordes visuales */
 }
 
-.left-sidebar h2 {
-  font-size: 24px;
-  margin-bottom: 10px;
+/* Contenedor del logo */
+.chat-left-column .chat-logo-container {
+  text-align: left; /* Alineación a la izquierda */
+  padding: 0; /* Elimina cualquier relleno interno */
+  margin: 0; /* Elimina márgenes externos */
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); /* Sombra sutil */
+  display: flex; /* Flexbox para control preciso */
+  justify-content: flex-start; /* Alinea la imagen a la izquierda */
+  align-items: center; /* Centra la imagen verticalmente si es necesario */
 }
 
-.left-sidebar p {
+/* Logo en sí */
+.chat-left-column .chat-logo img {
+  width: 100%; /* Hace que la imagen ocupe todo el ancho del contenedor */
+  height: auto; /* Mantiene las proporciones */
+  max-width: 100%; /* No excede el ancho del contenedor */
+  object-fit: contain; /* Mantiene la relación de aspecto sin deformar */
+  margin: 0; /* Elimina cualquier margen adicional */
+  padding: 0; /* Elimina cualquier relleno */
+}
+
+/* Estilo cuando la imagen está en hover */
+.chat-left-column .chat-logo-container:hover img {
+  filter: brightness(1) contrast(1); /* Vuelve a la imagen normal */
+}
+
+/* Estilo para el título */
+.chat-left-column .chat-title {
+  font-size: 2em;
+  font-weight: bold;
+  text-align: center;
+  margin: 0;
+  margin-bottom: 20px;
+}
+
+/* Estilo para el subtítulo */
+.chat-left-column .chat-subtitle {
   font-size: 14px;
-  color: #555;
+  margin-top: 10px;
+  font-weight: bold;
+  text-align: center;
+  margin: 5px 0;
 }
 
-.stats {
+/* Estilo para el pie de página */
+.chat-left-column .chat-footer {
   margin-top: 20px;
   font-size: 14px;
-  color: #333;
+  text-align: center;
+  color: #888;
 }
 
-.left-sidebar button {
+/* Estilo para los botones */
+.chat-left-column button {
   margin-top: 20px;
   padding: 10px;
-  background-color: #ff6347;
+  width: 100%;
+  background-color: #0056b3;
   color: white;
   border: none;
   border-radius: 5px;
   cursor: pointer;
 }
 
-.left-sidebar button:hover {
-  background-color: #ff4500;
+/* Efecto hover en los botones */
+.chat-left-column button:hover {
+  background-color: #003f7f;
 }
 
-.banners img {
-  width: 100%;
-  height: auto;
-  margin-top: 20px;
-  border-radius: 8px;
+/* Estilos para los banners */
+.chat-banners {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  align-items: center;
+  margin: 20px 0;
 }
 
-footer {
-  margin-top: 40px;
+/* Estilo para los banners */
+.chat-banner-programming,
+.chat-banner-cloud {
   text-align: center;
-  font-size: 12px;
-  color: #888;
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
-/* Columna central (chat-room) */
+.chat-banner-programming img,
+.chat-banner-cloud img {
+  width: 100%; /* Asegura que la imagen ocupe todo el ancho disponible */
+  max-width: 600px; /* Limita el tamaño máximo de la imagen */
+  border-radius: 10px;
+  transition: transform 0.3s ease-in-out;
+}
+
+.chat-banner-programming img:hover,
+.chat-banner-cloud img:hover {
+  transform: scale(1.05); /* Efecto de ampliación */
+}
+
+/* Estilos para texto adicional */
+.chat-left-column p {
+  font-size: 14px;
+  color: #555;
+  text-align: center;
+}
+
+/* Estilos para pantallas pequeñas (Responsive) */
+@media (max-width: 768px) {
+  /* Ajustes para el logo */
+  .chat-left-column .chat-logo-container {
+    padding: 5px; /* Reduce el padding en pantallas pequeñas */
+  }
+
+  .chat-left-column .chat-logo img {
+    max-width: 80%; /* Hace que la imagen sea más pequeña en pantallas pequeñas */
+  }
+
+  /* Ajustes para los banners */
+  .chat-banner-programming img,
+  .chat-banner-cloud img {
+    max-width: 100%; /* Asegura que los banners ocupen todo el ancho disponible */
+  }
+}
+
+/********************************************************/
+/***************  ZONA CENTRAL **************************/
+/********************************************************/
+/* Contenedor principal del chat */
 .chat-room {
-  flex: 2;
+  width: 400px;
+  height: 500px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  border-radius: 10px;
+  border: 2px solid #2c3e50;
   background-color: #fff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: background-color 0.3s ease;
+  flex-grow: 1;
   padding: 20px;
-  border-radius: 8px;
-  height: 100vh;
-  overflow-y: auto;
+  margin: 0 10px;
+  top: 0;
+  box-sizing: border-box;
+  z-index: 10;
+  height: 90vh;
+}
+
+.chat-room-light {
+  background-color: #fff;
+  color: #333;
+}
+
+.chat-room-dark {
+  background-color: #333;
+  color: #fff;
+}
+
+/* Zona de mensajes */
+.chat-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .messages-display {
-  margin-bottom: 20px;
+  flex-grow: 1;
+  overflow-y: auto;
+  padding: 10px;
+  margin-bottom: 10px;
+  flex-grow: 1;
+  overflow-y: auto;
+  border-bottom: 2px solid #2c3e50; /* Recuadro para separar mensajes del pie de página */
+  padding-right: 10px;
+  position: relative;
 }
 
 .messages-display h3 {
@@ -83,65 +224,282 @@ footer {
 .messages-display ul {
   list-style: none;
   padding: 0;
+  margin: 0;
 }
 
 .messages-display li {
   margin-bottom: 10px;
-  background-color: #f1f1f1;
   padding: 10px;
+  background-color: #f1f1f1;
   border-radius: 8px;
+  word-wrap: break-word;
 }
 
+.chat-room-dark .messages-display li {
+  background-color: #444;
+}
+
+/* Botón de cambio de tema (transparente) */
+.theme-toggle-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-family: 'Arial', sans-serif;
+  font-style: italic;
+  color: #4caf50;
+  border: 1px solid #4caf50;
+  padding: 5px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s;
+}
+
+.theme-toggle-btn:hover {
+  background-color: #4caf50;
+  color: white;
+}
+
+/* Pie de página con el input y botón de enviar */
 .input-section {
   display: flex;
+  align-items: center;
   gap: 10px;
+  margin-top: auto;
+  padding: 10px;
+  width: 100%; /* Asegura que ocupe todo el ancho disponible */
 }
 
+/* Estilo para el input */
 .input-section input {
-  flex: 1;
+  flex-grow: 1; /* Hace que el input ocupe el máximo espacio disponible */
   padding: 10px;
   border: 1px solid #ccc;
   border-radius: 5px;
+  font-size: 14px;
+  min-width: 200px; /* Tamaño mínimo para el input */
+  transition: background-color 0.3s, color 0.3s; /* Suaviza el cambio de color */
 }
 
-.input-section button {
-  padding: 10px;
+/* Estilo para el botón de enviar */
+.send-btn {
+  padding: 5px 10px;
   background-color: #4caf50;
   color: white;
   border: none;
   border-radius: 5px;
   cursor: pointer;
+  font-size: 14px;
+  width: auto; /* El botón no debe estirarse, manteniendo su tamaño fijo */
+  min-width: 80px; /* Un tamaño mínimo para el botón */
+  transition: background-color 0.3s; /* Suaviza el cambio de color en hover */
 }
 
-.input-section button:hover {
+/* Efecto hover para el botón de enviar */
+.send-btn:hover {
   background-color: #45a049;
 }
 
-/* Columna derecha */
-.right-sidebar {
-  flex: 1;
-  background-color: #f4f4f4;
+/* Estilo para tema oscuro */
+.chat-room-dark .input-section input {
+  background-color: #555;
+  color: white;
+  border: 1px solid #444;
+}
+
+.chat-room-dark .send-btn {
+  background-color: #4caf50;
+  color: white;
+}
+
+.chat-room-dark .send-btn:hover {
+  background-color: #45a049;
+}
+
+/* Estilo para tema claro */
+.chat-room-light .input-section input {
+  background-color: #fff;
+  color: black;
+  border: 1px solid #ccc;
+}
+
+.chat-room-light .send-btn {
+  background-color: #4caf50;
+  color: white;
+}
+
+.chat-room-light .send-btn:hover {
+  background-color: #45a049;
+}
+
+/********************************************************/
+/***************  columna de la derecha******************/
+/********************************************************/
+/* Estilo de la columna derecha */
+.chat-right-column {
+  display: flex;
+  flex-direction: column;
+  width: 20%; /* Igual que la columna izquierda */
+  background-color: #4f6d7a; /* Azul suave y cálido */
+  color: #ffffff; /* Texto blanco para mayor contraste */
   padding: 20px;
   border-radius: 8px;
-  height: 100vh;
+  border: 2px solid #3b4a53; /* Borde más suave pero oscuro */
+  height: 90vh; /* Ajusta la altura según tu preferencia */
   position: sticky;
   top: 0;
+  box-sizing: border-box; /* Asegura que el padding no afecte el ancho */
+  z-index: 10; /* Para que esté por encima de otros elementos */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra suave */
+  max-width: 100vw;
+  overflow-y: auto; /* Permite el desplazamiento si el contenido es demasiado grande */
 }
 
-.right-sidebar h3 {
-  font-size: 18px;
-  margin-bottom: 10px;
-}
-
-.right-sidebar ul {
-  list-style: none;
-  padding: 0;
-}
-
-.right-sidebar li {
-  background-color: #eaeaea;
+/* Ajusta el tamaño de la caja y la fuente dinámicamente */
+.chat-right-column .chat-metricsbox {
+  width: 100%; /* Asegura que el ancho de la caja sea flexible */
   padding: 10px;
-  margin-bottom: 10px;
+  background-color: #627f8c;
+  color: #ffffff;
+  box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.2);
   border-radius: 8px;
-}
+  border: 1px solid #3b4a53;
+  margin: 10px auto;
   
+  /* Altura dinámica */
+  height: auto; /* Altura automática para que se ajuste al contenido */
+  
+  /* Tamaño de la fuente ajustable */
+  font-size: clamp(11px, 2vw + 1rem, 18px); /* Ajuste dinámico de tamaño de fuente */
+ 
+  margin: 0; /* Elimina márgenes no deseados */
+}
+
+/* Estilos para la caja de usuarios activos */
+.chat-right-column .chat-active-users-box {
+  border: 1px solid #3b4a53; /* Borde azul oscuro */
+  padding: 10px;
+  border-radius: 8px;
+  width: 100%; /* Ancho 100% de la columna */
+  height: auto; /* La caja crece con el contenido */
+  max-height: 180vh; /* Limita la altura máxima al 80% de la ventana */
+  overflow-y: scroll; /* Permite el desplazamiento siempre */
+  background-color: #eef2f5; /* Fondo azul muy suave */
+  transition: none; /* Elimina cualquier transición de altura */
+  margin-left: 0; /* Elimina el margen izquierdo */
+}
+
+/* Estilo de la lista de usuarios */
+.chat-right-column .chat-active-users-box ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+  height: auto; /* Asegura que la lista crezca hasta el límite */
+  max-height: 100%; /* La lista puede crecer hasta el límite de su contenedor */
+  overflow-y: auto; /* Desplazamiento dentro de la lista */
+}
+
+/* Elementos de la lista de usuarios */
+.chat-right-column .chat-active-users-box li {
+  padding: 5px 0;
+  border-bottom: 1px solid #c1d1d9; /* Línea separadora suave */
+  font-size: 11px;
+  color: #4f6d7a; /* Color de texto azul suave */
+}
+
+/* Estilo del encabezado de la caja de usuarios activos */
+.chat-right-column .chat-active-users-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+/* Estilo del título en la caja de usuarios */
+.chat-right-column .chat-active-users-box h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #3b4a53; /* Título en tono azul oscuro */
+}
+/* Estilos para el botón de salida */
+.chat-right-column .logout-btn {
+  background-color: transparent; /* Fondo transparente */
+  color: #4a90e2; /* Color de texto en azul suave */
+  font-family: 'Pacifico', cursive; /* Tipografía artística */
+  font-size: 12px; /* Tamaño de fuente */
+  padding: 10px; /* Espaciado alrededor del texto */
+  border: 2px solid #4a90e2; /* Borde en el mismo color */
+  border-radius: 8px; /* Bordes redondeados */
+  cursor: pointer; /* Cursor de mano al pasar el ratón */
+  width: 100%; /* Ocupa todo el ancho de la columna */
+  margin-top: 20px; /* Espaciado superior */
+  transition: background-color 0.3s ease, transform 0.2s ease, color 0.3s ease; /* Transición suave */
+}
+
+/* Efecto hover para el botón */
+.chat-right-column .logout-btn:hover {
+  background-color: #4a90e2; /* Color de fondo al pasar el ratón */
+  color: white; /* Cambia el color del texto al pasar el ratón */
+  transform: scale(1.05); /* Efecto de ampliación */
+}
+
+/* Estilo para el botón al hacer clic */
+.chat-right-column .logout-btn:active {
+  background-color: #357abd; /* Fondo más oscuro al hacer clic */
+  color: white; /* Cambiar color de texto al hacer clic */
+}
+
+/*************************************************/
+
+.chat-banners {
+  display: flex;
+  justify-content: space-between;
+}
+
+.banner-container {
+  position: relative;
+  width: 100%;
+  max-width: 600px;
+  background: #7F00FF;
+  overflow: hidden;
+  border-radius: 15px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.banner-title {
+  color: white;
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+.banner-subtitle {
+  color: white;
+  font-size: 1.25rem;
+  margin-top: 10px;
+}
+
+.banner-image {
+  width: 100%;
+  height: auto;
+  margin-top: 15px;
+  border-radius: 10px;
+}
+
+.banner-container:hover {
+  background-color: #9A00FF;
+}
+
+/* Animaciones */
+.banner-title, .banner-subtitle {
+  color: white;
+  opacity: 0;
+  transform: translateY(20px);
+  animation: slideIn 2s forwards;
+}
+
+@keyframes slideIn {
+  0% { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}

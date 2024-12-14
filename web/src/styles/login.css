@@ -84,19 +84,18 @@ button:hover {
 
 /* Estilo para las ventanas de mensaje */
 /* Ventana de error */
-/* Ventana de error */
+ 
 .message-window {
   position: absolute;
-  background-color:  #ffffff;  /*  rgba(255, 0, 0, 0.8); Fondo blanco */
-  color: #000; /*  white; Texto negro */
+  background-color: #ffffff;  /* Fondo blanco */
+  color: #000; /* Texto negro */
   border: 1px solid #dcdcdc;
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   width: 320px;
-  top: 150px;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 1000;
+  bottom: 20px; /* Posición 20px desde el borde inferior */
+  right: 20px; /* Posición 20px desde el borde derecho */
+  /*z-index: 1000;*/
 }
  
 .message-window .header {

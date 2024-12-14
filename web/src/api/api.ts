@@ -68,13 +68,47 @@ export const login = async (nickname: string): Promise<LoginResponse> => {
   }
 };
 
-// Enviar mensaje
-export const sendMessage = async (token: string, roomId: string, message: string) => {
-  await axios.post(
-    `${apiUrl}/newmessage`,
-    { tokenSession: token, idSala: roomId, mensaje: message },
-    { headers: { Authorization: `Bearer ${token}` } }
-  );
+// Enviar mensajes al servidor GoChat 
+export const sendMessage = async (nickName: string, token: string, roomId: string, roomName: string, message: string) => {
+  const requestData = {
+    nickname: nickName,           // Reemplaza con el nombre del usuario
+    idSala: roomId,               // ID de la sala
+    nameSala: roomName,           // Nombre de la sala
+    tokenSession: token,          // El token de sesión
+    mensaje: message              // El mensaje que deseas enviar
+  };
+
+  try {
+    // Realizar la solicitud POST
+    const response = await axios.post(
+      `${apiUrl}/newmessage`, // URL del servidor GoChat
+      requestData,            // Datos de la solicitud en formato JSON
+      { headers: { Authorization: `Bearer ${token}` } } // Encabezado de autenticación
+    );
+
+    // Si el servidor responde correctamente, devolver el estado de éxito
+    if (response.data && response.data.status === 'success') {
+      console.log('Mensaje enviado correctamente:', response.data.message);
+      return JSON.stringify({
+        status: 'success',
+        message: 'El mensaje fue enviado correctamente.'
+      });
+    } else {
+      // Si el estado no es success, devolver un error
+      return JSON.stringify({
+        status: 'error',
+        message: 'No se pudo enviar el mensaje. Intenta nuevamente más tarde.'
+      });
+    }
+  } catch (error) {
+    // Si hay un error en la solicitud (por ejemplo, error de conexión o servidor fuera de servicio)
+    console.error('Error en la solicitud:', error);
+
+    return JSON.stringify({
+      status: 'error',
+      message: 'El servidor está temporalmente fuera de servicio. Por favor, intenta nuevamente en un instante.'
+    });
+  }
 };
 
 // Obtener mensajes
@@ -104,17 +138,18 @@ export const getMessages = async (token: string, roomId: any, lastSeenMessageId:
     throw error; // Asegúrate de lanzar el error para que pueda ser manejado por el llamador
   }
 };
-export const getActiveUsers = async (token: string, roomId: string): Promise<string> => {
+export const getAliveUsers = async (token: string, roomId: string): Promise<string> => {
   const response = await axios.post(
     `${apiUrl}/getusers`,
-    JSON.stringify({ tokenSession: token, idSala: roomId }), // Pasar el JSON como string
-    { headers: { 
-        'Content-Type': 'application/json', // Asegurarse de que el tipo de contenido sea JSON
-        Authorization: `Bearer ${token}` 
-      } 
+    JSON.stringify({ tokenSession: token, idSala: roomId }),
+    {
+      headers: { 
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      }
     }
   );
 
-  const data = response.data as string; // Asegurarse de que la respuesta se maneje como string
+  const data = response.data as string;
   return data;
 };

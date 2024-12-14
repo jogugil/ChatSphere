@@ -225,18 +225,18 @@ func (mp *MongoPersistencia) ObtenerMensajesDesdeId(idSala uuid.UUID, idMensaje 
 	return mensajes, nil
 }
 func (mp *MongoPersistencia) GuardarUsuario(usuario *entities.Usuario) error {
-	fmt.Printf("Iniciando el guardado del usuario con ID: %s\n", usuario.IdUsuario)
+	fmt.Printf("Iniciando el guardado del usuario con ID: %s\n", usuario.UserId)
 
 	// Crear un documento BSON a partir del usuario
 	documento := bson.D{
-		{Key: "id_usuario", Value: usuario.IdUsuario},
+		{Key: "id_usuario", Value: usuario.UserId},
 		{Key: "nickname", Value: usuario.Nickname},
 		{Key: "token", Value: usuario.Token},
-		{Key: "hora_ultima_accion", Value: usuario.HoraUltimaAccion},
-		{Key: "estado", Value: usuario.Estado},
-		{Key: "tipo", Value: usuario.Tipo},
-		{Key: "idsala", Value: usuario.IdSala}, // La sala puede ser nil
-		{Key: "namesala", Value: usuario.NameSala}, // La sala puede ser nil
+		{Key: "hora_ultima_accion", Value: usuario.LastActionTime},
+		{Key: "estado", Value: usuario.State},
+		{Key: "tipo", Value: usuario.Type},
+		{Key: "idsala", Value: usuario.RoomId},     // La sala puede ser nil
+		{Key: "namesala", Value: usuario.RoomName}, // La sala puede ser nil
 	}
 	fmt.Printf("Documento BSON para guardar usuario: %+v\n", documento)
 
@@ -250,6 +250,6 @@ func (mp *MongoPersistencia) GuardarUsuario(usuario *entities.Usuario) error {
 	}
 
 	// Confirmación de éxito
-	fmt.Printf("Usuario con ID: %s guardado correctamente en MongoDB\n", usuario.IdUsuario)
+	fmt.Printf("Usuario con ID: %s guardado correctamente en MongoDB\n", usuario.UserId)
 	return nil
 }

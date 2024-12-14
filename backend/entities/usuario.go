@@ -9,12 +9,12 @@ import (
 )
 
 type Usuario struct {
-	IdUsuario        string
-	Nickname         string
-	Token            string
-	HoraUltimaAccion time.Time
-	Estado           types.EstadoUsuario
-	Tipo             string
-	IdSala           uuid.UUID
-	NameSala         string
+	UserId         string
+	Nickname       string
+	Token          string
+	LastActionTime time.Time
+	State          types.EstadoUsuario
+	Type           string
+	RoomId         uuid.UUID
+	RoomName       string
 }

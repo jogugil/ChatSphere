@@ -1,0 +1,104 @@
+/* ErrorMessage.css */
+.w-message-window {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 300px;
+  background-color: white;
+  border: 1px solid #dcdcdc;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  transform: translate(-50%, -50%);
+  z-index: 1000;
+}
+
+.w-header {
+  display: flex;
+  justify-content: space-between; /* Distribuye los elementos de manera uniforme */
+  color: #fff;
+  padding: 8px 10px;
+  align-items: center;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #ccc;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+  background-color: #1e3a5f; 
+}
+.w-icon {
+  font-size: 24px;
+  margin-right: 10px;
+}
+
+.w-title {
+  font-weight: bold;
+  font-size: 18px;
+  flex-grow: 1;
+}
+
+.w-controls {
+  display: flex; /* Alinea los botones horizontalmente */
+  gap: 8px; /* Añade un espacio entre los botones */
+  justify-content: flex-end; /* Alineamos los botones a la derecha */
+  align-items: center;  /* Centra verticalmente los botones */
+}
+
+.w-controls button {
+  background-color: transparent;
+  border: none;
+  color: #fff;
+  font-size: 16px;
+  cursor: pointer;
+  margin-left: 5px;
+  padding: 5px; /* Ajustamos el padding para un mejor aspecto */
+}
+
+.w-controls button:hover {
+  color: #a3c4f3;
+}
+
+.w-content {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.w-ok-button {
+  padding: 10px 20px; /* Estilo correcto del botón */
+  background-color: #1e3a5f; /* Color del fondo */
+  color: white;
+  border: none;
+  cursor: pointer;
+  border-radius: 5px;
+  margin-top: 10px;
+  width: auto; /* Asegura que el ancho no sea 100% */
+  text-align: center; /* Centra el texto */
+  font-size: 16px;
+}
+
+.w-ok-button:hover {
+  background-color: #1e311f; /* Efecto hover */
+}
+
+.w-message-window.error {
+  border-color: red;
+  background-color: #ffe6e6;
+}
+
+.w-message-window.info {
+  border-color: blue;
+  background-color: #e6f7ff;
+}
+
+.w-message-window .w-icon.error {
+  color: red;
+}
+
+.w-message-window .w-icon.info {
+  color: blue;
+}

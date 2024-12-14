@@ -111,7 +111,7 @@ func (gestion *GestionUsuarios) RegistrarUsuario(nickname string, token string, 
 func (g *GestionUsuarios) ObtenerUsuariosActivos() []*entities.Usuario {
 	var usuariosActivos []*entities.Usuario
 	for _, usuario := range g.Usuarios {
-		if usuario.Estado == types.Activo {
+		if usuario.State == types.Activo {
 			usuariosActivos = append(usuariosActivos, usuario)
 		}
 	}

@@ -25,14 +25,14 @@ func TestTuFuncionMongoDB() {
 	}
 	// Crear un usuario de prueba
 	usuario := &entities.Usuario{
-		IdUsuario:        uuid.New().String(),
-		Nickname:         "usuario_test",
-		Token:            "token_123",
-		HoraUltimaAccion: time.Now(),
-		Estado:           types.Activo,
-		Tipo:             "regular",
-		IdSala:           idsala, // Suponiendo que puede ser nil
-		NameSala:         "SalaId",
+		UserId:         uuid.New().String(),
+		Nickname:       "usuario_test",
+		Token:          "token_123",
+		LastActionTime: time.Now(),
+		State:          types.Activo,
+		Type:           "regular",
+		RoomId:         idsala, // Suponiendo que puede ser nil
+		RoomName:       "SalaId",
 	}
 
 	// 1. Test de GuardarUsuario

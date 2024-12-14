@@ -50,14 +50,14 @@ type RequestUserData struct {
 
 // Estructura de la respuesta esperada
 type ResponseUser struct {
-	Status          string `json:"status"`
-	Message         string `json:"message"`
-	TokenSesion     string `json:"tokenSesion"`
-	Nickname        string `json:"nickname"`
-	IdSala          string `json:"idSala"`
-	UsuariosActivos []struct {
-		Nickname         string `json:"nickname"`
-		HoraUltimaAccion string `json:"horaUltimaAccion"`
+	Status      string `json:"status"`
+	Message     string `json:"message"`
+	TokenSesion string `json:"tokenSesion"`
+	Nickname    string `json:"nickname"`
+	RoomId      string `json:"roomId"`
+	AliveUsers  []struct {
+		Nickname       string `json:"nickname"`
+		LastActionTime string `json:"lastactiontime"`
 	} `json:"data,omitempty"`
 }
 
@@ -413,15 +413,15 @@ func MostrarMensajes(mensajes []MessageResponse) {
 // Función MostrarUsuarios que filtra por idSala y muestra los usuarios activos
 func MostrarUsuarios(usuarios ResponseUser) {
 	// Mostrar el ID de la sala y los usuarios activos
-	fmt.Printf("Sala: %s\n", usuarios.IdSala)
+	fmt.Printf("Sala: %s\n", usuarios.RoomId)
 	// Iterar sobre cada ResponseUser en el slice de usuarios
-	if len(usuarios.UsuariosActivos) == 0 {
+	if len(usuarios.AliveUsers) == 0 {
 		fmt.Println("No hay usuarios activos en esta sala.")
 	} else {
-		listuser := usuarios.UsuariosActivos
+		listuser := usuarios.AliveUsers
 		for _, usuario := range listuser {
 			// Mostrar el Nickname y la Hora de la última acción
-			fmt.Printf("Usuario: %s, Última acción: %s\n", usuario.Nickname, usuario.HoraUltimaAccion)
+			fmt.Printf("Usuario: %s, Última acción: %s\n", usuario.Nickname, usuario.LastActionTime)
 		}
 	}
 

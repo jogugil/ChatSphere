@@ -12,14 +12,14 @@ const Login: React.FC = () => {
   const [minimized, setMinimized] = useState<boolean>(false);
 
   const navigate = useNavigate();
-  const { setNickname: setAuthNickname, setToken } = useAuth();
+  const { setNickName: setAuthNickname, setToken } = useAuth();
 
   const handleLogin = async () => {
     console.log("Intentando iniciar sesión...");
 
     try {
       const response: LoginResponse = await login(nicknamelogin);
-      console.log(response);
+      console.log("Login --> response :",response);
 
       if (response.status === 'nickname_taken') {
         setErrorMessage('El nickname ya está en uso. Intenta con otro.');

@@ -59,8 +59,8 @@ func LoginHandler(c *gin.Context) {
 			"message":  "",
 			"token":    "",
 			"nickname": "",
-			"idsala":   "",
-			"namesala": "",
+			"roomId":   "",
+			"roomName": "",
 		}
 
 		// Verificar si el error contiene el código específico de nickname en uso
@@ -81,7 +81,7 @@ func LoginHandler(c *gin.Context) {
 
 	// Log de los datos del usuario después del login
 	fmt.Printf("Login exitoso. Datos del usuario: Token: %s, Nickname: %s, Sala ID: %v, Sala Name: %s\n",
-		usuario.Token, usuario.Nickname, usuario.IdSala, usuario.NameSala)
+		usuario.Token, usuario.Nickname, usuario.RoomId, usuario.RoomName)
 
 	// Responder con un JSON de éxito si el login es exitoso
 	responseData := gin.H{
@@ -89,8 +89,8 @@ func LoginHandler(c *gin.Context) {
 		"message":  "login realizado",
 		"token":    usuario.Token,
 		"nickname": usuario.Nickname,
-		"idsala":   usuario.IdSala,   // Sala por defecto
-		"namesala": usuario.NameSala, // Nombre de la sala
+		"roomid":   usuario.RoomId,   // Sala por defecto
+		"roomname": usuario.RoomName, // Nombre de la sala
 	}
 
 	// Log de la respuesta enviada

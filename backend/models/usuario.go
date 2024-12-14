@@ -14,41 +14,41 @@ type LocalUsuario entities.Usuario
 
 // Implementación de los métodos de la interfaz UsuarioChat
 func (u *LocalUsuario) IniciarSesion() bool {
-	u.HoraUltimaAccion = time.Now()
-	u.Estado = types.Activo
+	u.LastActionTime = time.Now()
+	u.State = types.Activo
 	return true
 }
 
 func (u *LocalUsuario) EliminarSesion() bool {
-	u.Estado = types.Inactivo
+	u.State = types.Inactivo
 	return true
 }
 
 func (u *LocalUsuario) ActualizarEstado() {
-	u.Estado = types.Activo
+	u.State = types.Activo
 }
 
-func (u *LocalUsuario) UnirseASala(sala *entities.Sala) {
-	u.IdSala = sala.ID
+func (u *LocalUsuario) UnirseASala(room *entities.Sala) {
+	u.RoomId = room.ID
 }
 
 func (u *LocalUsuario) SalirDeSala() {
-	idsala, err := uuid.Parse("00000000-0000-0000-0000-000000000000")
-	if err !=nil {
-		log.Printf("error a poner nil una sla del usuario: %v",err)
+	roomId, err := uuid.Parse("00000000-0000-0000-0000-000000000000")
+	if err != nil {
+		log.Printf("error a poner nil una sla del usuario: %v", err)
 	}
-	u.IdSala = idsala // Ahora se elimina la referencia a la sala
+	u.RoomId = roomId // Ahora se elimina la referencia a la sala
 }
 
-func NewUsuarioGo(nickname string, sala *entities.Sala) *entities.Usuario {
+func NewUsuarioGo(nickname string, room *entities.Sala) *entities.Usuario {
 	return &entities.Usuario{
-		IdUsuario:        "usr-" + uuid.New().String(),
-		Nickname:         nickname,
-		Token:            CrearTokenSesion(nickname),
-		Tipo:             "usuariochat",
-		HoraUltimaAccion: time.Now(),
-		Estado:           types.Activo,
-		IdSala:           sala.ID,
-		NameSala:         sala.Name,
+		UserId:         "usr-" + uuid.New().String(),
+		Nickname:       nickname,
+		Token:          CrearTokenSesion(nickname),
+		Type:           "usuariochat",
+		LastActionTime: time.Now(),
+		State:          types.Activo,
+		RoomId:         room.ID,
+		RoomName:       room.Name,
 	}
 }

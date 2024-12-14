@@ -168,7 +168,7 @@ func (sm *GestionSalas) EnviarMensaje(idSala uuid.UUID, nickname, mensaje string
 		return err
 	}
 
-	nuevoMensaje := models.CrearMensajeConFecha(mensaje, usuario, idSala, usuario.HoraUltimaAccion)
+	nuevoMensaje := models.CrearMensajeConFecha(mensaje, usuario, idSala, usuario.LastActionTime)
 
 	// Modificamos el historial de mensajes
 	sala.HistoricoMensajes.Enqueue(*nuevoMensaje)

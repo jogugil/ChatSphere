@@ -332,7 +332,198 @@ function restore_env() {
     cp backend/.env.bak backend/.env
     echo "Archivo .env restaurado correctamente."
 }
+# ==============================================
+# Función: check_docker_mongodb
+# Descripción:
+#   Verifica si MongoDB está disponible en Docker.
+#
+# Parámetros: Ninguno
+#
+# Uso:
+#   check_docker_mongodb
+#
+# Autor: José Javier Gutiérrez Gil
+# ==============================================
+function check_docker_mongodb() {
+    # Comprobar si MongoDB ya está disponible en Docker
+    docker ps -a | grep -i mongo &> /dev/null
+    if [[ $? -eq 0 ]]; then
+        echo "MongoDB ya está disponible en un contenedor Docker."
+        return 0  # MongoDB está disponible en Docker
+    else
+        echo "MongoDB no está disponible en Docker."
+        return 1  # MongoDB no está en Docker
+    fi
+}
+# ==============================================
+# Función: check_and_install_mongodb
+# Descripción:
+#   Comprueba si MongoDB está instalado y, si no lo está, lo instala.
+#   Luego, verifica si el servicio de MongoDB puede levantarse y realiza
+#   una comprobación básica de su funcionamiento.
+#
+# Parámetros:
+#   Ninguno
+#
+# Uso:
+#   check_and_install_mongodb
+#
+# Autor: José Javier Gutiérrez Gil
+# ==============================================
+check_and_install_mongodb() {
+    # Verificar si MongoDB está instalado
+    if ! command -v mongod &>/dev/null; then
+        echo "MongoDB no está instalado. Instalándolo ahora..."
+        if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+            # Instalar MongoDB en Linux
+            sudo apt-get update
+            sudo apt-get install -y mongodb
+        elif [[ "$OSTYPE" == "darwin"* ]]; then
+            # Instalar MongoDB en macOS
+            brew tap mongodb/brew
+            brew install mongodb-community@6.0
+        else
+            echo "Sistema operativo no soportado para instalación automática."
+            exit 1
+        fi
+    else
+        echo "MongoDB ya está instalado."
+    fi
 
+    # Verificar si el servicio de MongoDB puede levantarse
+    if ! pgrep mongod &>/dev/null; then
+        echo "Iniciando servicio MongoDB..."
+        sudo systemctl start mongod
+        sudo systemctl enable mongod
+    fi
+
+    # Comprobación básica de funcionamiento
+    if mongo --eval "db.runCommand({ ping: 1 })" &>/dev/null; then
+        echo "MongoDB está funcionando correctamente."
+    else
+        echo "Error: MongoDB no se pudo iniciar correctamente."
+        exit 1
+    fi
+}
+
+# ==============================================
+# Función: create_database
+# Descripción:
+#   Solicita al usuario un nombre para una nueva base de datos en MongoDB.
+#   Si no se proporciona un nombre, utiliza "MongodbGoChat" como predeterminado.
+#   Crea la base de datos y una colección inicial llamada "default_collection".
+#
+# Parámetros:
+#   Ninguno
+#
+# Uso:
+#   create_database
+#
+# Autor: José Javier Gutiérrez Gil
+# ==============================================
+create_database() {
+    # Solicitar al usuario un nombre para la base de datos o usar el predeterminado
+    read -p "Ingrese el nombre de la base de datos (por defecto: MongodbGoChat): " db_name
+    db_name=${db_name:-MongodbGoChat}
+
+    # Crear la base de datos
+    echo "Creando la base de datos '$db_name'..."
+    if mongo --eval "use $db_name; db.createCollection('default_collection');" &>/dev/null; then
+        echo "Base de datos '$db_name' creada exitosamente."
+    else
+        echo "Error al crear la base de datos '$db_name'."
+        exit 1
+    fi
+}
+# ==============================================
+# Función: install_mongodb_system
+# Descripción:
+#   Instala MongoDB en el sistema.
+#
+# Parámetros: Ninguno
+#
+# Uso:
+#   install_mongodb_system
+#
+# Autor: José Javier Gutiérrez Gil
+# ==============================================
+function install_mongodb_system() {
+    echo "Instalando MongoDB en el sistema..."
+
+    # Instalar MongoDB en el sistema
+    if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+        # Instalar MongoDB en Linux
+        sudo apt-get update
+        sudo apt-get install -y mongodb
+        echo "MongoDB ha sido instalado en el sistema."
+    elif [[ "$OSTYPE" == "darwin"* ]]; then
+        # Instalar MongoDB en macOS
+        brew tap mongodb/brew
+        brew install mongodb-community@6.0
+        echo "MongoDB ha sido instalado en macOS."
+    else
+        echo "Sistema operativo no soportado para instalación automática."
+        exit 1
+    fi
+
+    # Iniciar el servicio de MongoDB
+    sudo systemctl start mongodb
+    echo "MongoDB ha comenzado a ejecutarse en el sistema."
+}
+# ==============================================
+# Función: install_mongodb_docker
+# Descripción:
+#   Instala MongoDB en Docker.
+#
+# Parámetros: Ninguno
+#
+# Uso:
+#   install_mongodb_docker
+#
+# Autor: José Javier Gutiérrez Gil
+# ==============================================
+function install_mongodb_docker() {
+    echo "Instalando MongoDB en Docker..."
+
+    # Descargar la imagen de MongoDB
+    docker pull mongo:latest
+
+    # Crear y ejecutar el contenedor de MongoDB
+    docker run -d --name mongodb -p 27017:27017 mongo:latest
+    echo "MongoDB está ejecutándose en Docker en el puerto 27017."
+}
+# ==============================================
+# Función: install_mongodb_option
+# Descripción:
+#   Pregunta al usuario si desea instalar MongoDB en su sistema o en Docker.
+#
+# Parámetros: Ninguno
+#
+# Uso:
+#   install_mongodb_option
+#
+# Autor: José Javier Gutiérrez Gil
+# ==============================================
+function install_mongodb_option() {
+    # Verificar si MongoDB está disponible en Docker
+    check_docker_mongodb
+    if [[ $? -eq 0 ]]; then
+        echo "¿Quieres usar MongoDB desde Docker o instalarlo en tu sistema?"
+    else
+        echo "MongoDB no está disponible en Docker. ¿Quieres instalarlo en tu sistema o en Docker?"
+    fi
+
+    # Preguntar al usuario
+    read -p "Selecciona una opción: (1) Instalar MongoDB en el sistema (2) Usar MongoDB en Docker: " opcion
+    if [[ "$opcion" == "1" ]]; then
+        install_mongodb_system
+    elif [[ "$opcion" == "2" ]]; then
+        install_mongodb_docker
+    else
+        echo "Opción no válida. El script se detendrá."
+        exit 1
+    fi
+}
 # ==============================================
 # Función: main
 # Descripción:
@@ -345,13 +536,25 @@ function restore_env() {
 #
 # Autor: José Javier Gutiérrez Gil
 # ==============================================
+# Función para iniciar el servidor GoChat
 function main() {
+    # Preguntar si se debe instalar MongoDB en el sistema o en Docker
+    install_mongodb_option
+
+    # Ahora, procedemos con el resto del flujo del backend de GoChat
     check_go
     check_dependencies
     check_chat_port
+     #check_and_install_mongodb
+     #create_database
+
+
+    echo "Iniciando el servidor GoChat..."
+    # El resto de la implementación del backend sigue aquí...
     start_backend
     # restore_env
 }
+
 
 # Ejecutar la función principal
 main

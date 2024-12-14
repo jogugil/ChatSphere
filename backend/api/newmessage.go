@@ -2,10 +2,11 @@ package api
 
 import (
 	"backend/services"
+	"log"
 	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"log"
 )
 
 func NewMessageHandler(c *gin.Context) {
@@ -34,7 +35,7 @@ func NewMessageHandler(c *gin.Context) {
 	log.Printf("Datos recibidos: %+v", requestData)
 
 	// Obtener la instancia del singleton
-	secMod, err := services.GetSecModServidorChat ()
+	secMod, err := services.GetSecModServidorChat()
 	if err != nil {
 		// Si el IdSala no es un UUID válido, devolver un error
 		log.Printf("Error al obtener el servidor chat. : %v", err)
@@ -56,8 +57,7 @@ func NewMessageHandler(c *gin.Context) {
 		return
 	}
 
-	 
-	// Llamar al método para enviar el mensaje	
+	// Llamar al método para enviar el mensaje
 	err = secMod.EjecutarEnvioMensaje(requestData.Nickname, requestData.TokenSesion, requestData.Mensaje, idSalaUUID)
 	if err != nil {
 		// Log para mostrar error al intentar enviar el mensaje
@@ -76,6 +76,7 @@ func NewMessageHandler(c *gin.Context) {
 
 	// Responder con un JSON de éxito si el mensaje se envía correctamente
 	c.JSON(http.StatusOK, gin.H{
-		"status": "ok",
+		"status":  "ok",
+		"message": "Mensaje emitido a la sala del chat correctamente",
 	})
 }

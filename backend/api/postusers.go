@@ -11,25 +11,25 @@ import (
 )
 
 // Estructura para los usuarios activos
-type UsuarioActivo struct {
-	Nickname         string `json:"nickname"`
-	HoraUltimaAccion string `json:"horaUltimaAccion"`
+type AliveUsers struct {
+	Nickname       string `json:"nickname"`
+	LastActionTime string `json:"lastactiontime"`
 }
 
 // Estructura para la respuesta general
 type ResponseUser struct {
-	Status          string          `json:"status"`
-	Message         string          `json:"message"`
-	TokenSesion     string          `json:"tokenSesion"`
-	Nickname        string          `json:"nickname"`
-	IdSala          string          `json:"idSala"`
-	UsuariosActivos []UsuarioActivo `json:"data,omitempty"`
+	Status      string       `json:"status"`
+	Message     string       `json:"message"`
+	TokenSesion string       `json:"tokenSesion"`
+	Nickname    string       `json:"nickname"`
+	RoomId      string       `json:"roomId"`
+	AliveUsers  []AliveUsers `json:"data,omitempty"`
 }
 
 func PostUsersHandler(msg []byte) []byte {
 	var requestData struct {
-		IdSala      string `json:"idSala"`
-		TokenSesion string `json:"tokenSesion"`
+		RoomId      string `json:"roomid"`
+		TokenSesion string `json:"tokensesion"`
 		Nickname    string `json:"nickname"`
 	}
 
@@ -62,7 +62,7 @@ func PostUsersHandler(msg []byte) []byte {
 		log.Printf("Singleton de servidor de chat obtenido: %v", secMod)
 
 		// Validar IdSala
-		idSala, err := uuid.Parse(requestData.IdSala)
+		idSala, err := uuid.Parse(requestData.RoomId)
 		if err != nil {
 			log.Printf("Error al parsear IdSala: %v", err)
 			respChan <- ResponseUser{
@@ -86,32 +86,32 @@ func PostUsersHandler(msg []byte) []byte {
 		// Obtener usuarios activos
 		usuarios := secMod.GestionUsuarios.ObtenerUsuariosActivos()
 		if usuarios == nil {
-			log.Printf("Error al obtener usuarios activos: %v", err)
 			respChan <- ResponseUser{
 				Status:  "NOK",
-				Message: fmt.Sprintf("Error al obtener usuarios activos: %s", err.Error()),
+				Message: fmt.Sprintf("Error al obtener usuarios activos"),
 			}
+
 			return
 		}
 		log.Printf("Usuarios activos obtenidos para la sala %v: %v", idSala, usuarios)
 
 		// Construir la respuesta con la información de la sala y los usuarios activos
-		var usuariosActivos []UsuarioActivo
+		var aliveUsers []AliveUsers
 		for _, usuario := range usuarios {
-			usuariosActivos = append(usuariosActivos, UsuarioActivo{
-				Nickname:         usuario.Nickname,
-				HoraUltimaAccion: usuario.HoraUltimaAccion.Format("2006-01-02 15:04:05"), // Formato estándar de fecha y hora
+			aliveUsers = append(aliveUsers, AliveUsers{
+				Nickname:       usuario.Nickname,
+				LastActionTime: usuario.LastActionTime.Format("2006-01-02 15:04:05"), // Formato estándar de fecha y hora
 			})
 		}
 
 		// Preparar la respuesta
 		respChan <- ResponseUser{
-			Status:          "OK",
-			Message:         "Usuarios activos obtenidos correctamente.",
-			TokenSesion:     requestData.TokenSesion,
-			Nickname:        requestData.Nickname,
-			IdSala:          requestData.IdSala,
-			UsuariosActivos: usuariosActivos,
+			Status:      "OK",
+			Message:     "Usuarios activos obtenidos correctamente.",
+			TokenSesion: requestData.TokenSesion,
+			Nickname:    requestData.Nickname,
+			RoomId:      requestData.RoomId,
+			AliveUsers:  aliveUsers,
 		}
 	}()
 

@@ -9,16 +9,16 @@ import {JwtPayload} from "../types/typesComm"
 export type UUID = string;
 export class User {
   nickname: string;
-  id: string;
   status: string;
   private _token: string = TOKEN_NULO;
-  private _idRoom: UUID = "00000000-0000-0000-0000-000000000000"; 
+  private _roomId: UUID = "00000000-0000-0000-0000-000000000000"; 
+  private _roomName: string = "Sala Principal";
 
-  constructor(nickname: string, id: string, status: string, idRoom: string, token: string) {
+  constructor(nickname: string,  status: string, roomId: string, roomName: string, token: string) {
     this.nickname = nickname;
-    this.id = id;
     this.status = status;
-    this.idRoom = idRoom; // Esto llamará al setter que valida el UUID
+    this.roomId = roomId; // Esto llamará al setter que valida el UUID
+    this.roomName = roomName; // Esto llamará al setter que valida el UUID
     if (token) {        
         this.token = TOKEN_NULO;
     } else  {
@@ -71,15 +71,21 @@ export class User {
       return null;
     }
   } 
-
     // Getter y Setter para idSala
-    get idRoom(): UUID {
-        return this._idRoom;
+    get roomName(): UUID {
+      return this._roomName;
     }
-    set idRoom(value: string) {
+    set roomName(value: string) {
+      this._roomName = value; // Si la validación pasa, asigna el valor
+    }
+    // Getter y Setter para idSala
+    get roomId(): UUID {
+        return this._roomId;
+    }
+    set roomId(value: string) {
         if (!validateUUID(value)) {
             throw new Error('El ID de la sala no es un UUID válido');
         }
-        this._idRoom = value; // Si la validación pasa, asigna el valor
+        this._roomId = value; // Si la validación pasa, asigna el valor
     }
 }
