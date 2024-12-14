@@ -6,7 +6,7 @@ import { Room } from '../models/Room';
 import { Message, UUID } from "../models/Message";
 import { User } from "../models/User";
 import { MessageResponse } from '../types/typesComm';
-import { WErrorMessage } from "./ErrorMessage"; // Componente para mostrar errores
+import { WErrorMessage, } from "./ErrorMessage"; // Componente para mostrar errores
 import {ResponseUser, UsersAlive} from '../types/typesComm'
 import '../styles/chat.css';
 import BannerProgramming from './BannerProgramming';
@@ -39,7 +39,6 @@ const Clock = () => {
   );
 };
 
-
 const Chat = () => {
   // Estructuras que define los usuarios  activos que vienen del Servidor Gochat
   interface  aliveUsers {
@@ -61,8 +60,7 @@ const Chat = () => {
   const [aliveUsers, setAliveUsers]     = useState<string[]> ([]);         // Estado para los usuarios activos
   const [error, setError]               = useState<string | null> (null);  // Estado para errores
   
-  const [errorMessage, setErrorMessage] = useState<string | null> (null);
-  const [showError, setShowError]       = useState (false);
+ 
   const [minimized, setMinimized]       = useState (false);
 
   const navigate = useNavigate();
@@ -81,7 +79,9 @@ const Chat = () => {
   const [userChat, setUserChat] = useState<User | null>(null);  // Estado para el objeto User
   const [room, setRoom] = useState<Room | null>(null);  // Estado para el objeto Room
 
- 
+  const [showError, setShowError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [isErrorActive, setIsErrorActive] = useState(false);
 
     // Tipo explícito para las claves válidas
     type EscapeChar = "<" | ">" | "&" | "\"" | "'";
@@ -110,6 +110,7 @@ const Chat = () => {
     return prohibitedWords.some((word) => text.toLowerCase().includes(word));
   };
 
+  
   //envia el mensaje que el usuario pone en el input
   const handleSendMessage = async () => {
     if (!messageText.trim()) return; // No enviar mensajes vacíos
@@ -177,12 +178,9 @@ const Chat = () => {
         const messageList = await getMessages(userObject.token, userObject.idRoom, emptyUUID);
         
         if (!room) {
-          // Mostrar una ventana emergente de error
-          alert('El servicio de chat no está disponible. Disculpe las molestias. Por favor, intente ingresar nuevamente más tarde.');
-
-          // Redirigir al login
-          navigate('/');
-          return;  // Detener la ejecución del código si room es null
+          // Mostrar una ventana emergente de error       
+          console.error('Error , no se creo el objeto room');
+          throw new Error('El servicio de chat no está disponible. Disculpe las molestias. Por favor, intente ingresar nuevamente más tarde.');
         }
 
         // Convertir los mensajes a objetos
@@ -193,16 +191,15 @@ const Chat = () => {
 
         console.log('Mensajes cargados:', room.messageList);
       } catch (err) {
-        setError('El Servicio de Chat está temporalmente cerrado. Intente logarse mñas tarde');
+        setError('El Servicio de Chat está temporalmente cerrado. Intente logarse más tarde');
         console.error('Error al cargar los mensajes:', err);
         setShowError(true);
       }
 
       // Verificar que el objeto del usuario esté disponible
       if (!userChat || !userChat.token || !userChat.roomId) {
-        setErrorMessage('Datos del usuario no válidos');
-        setShowError(true);
-        navigate('/');
+        console.log('Datos del usuario no válidos');
+        throw new Error('El servicio de chat no está disponible. Disculpe las molestias. Por favor, intente ingresar nuevamente más tarde.');
       } else {
         // Cargar los usuarios activos
         console.log ("Cargamos los usuarios activos:",userChat);
@@ -222,8 +219,10 @@ const Chat = () => {
     localStorage.removeItem("Messages");
   
     // Redirigir al login
-    window.location.href = "/Login"; // Redirige a la página de login
+    window.location.href = "/"; // Redirige a la página de login
   };
+ 
+
  // Aquí solo reaccionamos a los valores necesarios para crear el usuario.
   useEffect(() => {
     console.log("Caht.tsx useEffect :", token, nickName, roomId, roomName);
@@ -246,6 +245,7 @@ const Chat = () => {
     console.log("userChat.token:", userChat?.token);
     console.log("userChat.roomId:", userChat?.roomId);
 
+    /*
     if (userChat) {
       const intervalId = setInterval(() => {
         console.log("Polling para actualizar usuarios activos y mensajes...");
@@ -255,7 +255,7 @@ const Chat = () => {
   
       return () => clearInterval(intervalId); // Limpiar al desmontar el componente
     }
-
+*/
     if (nickName && roomId && roomName && token) {
       
       const roomU = new Room(roomId, roomName);
@@ -278,45 +278,39 @@ const Chat = () => {
     <div className="chat-container">
       <div className="chat-left-column">
           <div className="chat-title">ChatSphere</div>
-          <div className="chat-subtitle">GoChat ZeroMQ</div>
+            <div className="chat-subtitle">GoChat ZeroMQ</div>
 
-           
-            <div className="chat-logo-container">
-              <div className="chat-logo">
-                <img src="../../public/images/logo.webp" alt="Logo" />
+            
+              <div className="chat-logo-container">
+                <div className="chat-logo">
+                  <img src="../../public/images/logo.webp" alt="Logo" />
+                </div>
               </div>
-            </div>
-     
-            <div className="chat-container">
-            <div className="chat-banners">
-              {/* Banner de Programación en la Nube */}
-              <div className="chat-banner-programming">
-                <BannerProgramming 
-                  title="Desarrolla, Concurre y Escala en la Nube"
-                  subtitle="Impulsa tu aplicación con Go, TypeScript, Node.js, React y más"
-                  imageUrl="https://via.placeholder.com/600x250?text=Banner+de+Tecnolog%C3%ADas+de+Programaci%C3%B3n"
-                />
-              </div>
-
-              {/* Banner de Cloud Computing */}
-              <div className="chat-banner-cloud">
-                <BannerCloud 
-                  title="Escala sin Servidores"
-                  subtitle="Soluciones eficientes con FaaS y Serverless"
-                  imageUrl="https://via.placeholder.com/600x250?text=Banner+de+Cloud+Computing"
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="footer">
-            <p>&copy; 2024 José Javier Gutiérrez Gil</p>
-          </div>
-      </div>
       
-        <div className={`chat-room ${isDarkMode ? 'chat-room-dark' : 'chat-room-light'}`}>
-          <div className="chat-content">
-            <div className="messages-display">
+              <div className="chat-container">
+              <div className="chat-banners">
+                {/* Banner de Programación en la Nube */}
+                <div className="chat-banner-programming">
+                  <BannerProgramming  
+                    titleSlogan="Desarrollos ágiles para tus aplicaciones"
+                    subtitleSlogan="Escalabilidad y elasticidad eficientes"
+                    imageUrl="../../public/images/pattern.png"
+                  />
+                </div>
+
+  
+              </div>
+            </div>
+
+            <div className="footer">
+              <p>&copy; 2024 José Javier Gutiérrez Gil</p>
+              <p className="email-style">&copy; jogugil@gmail.com // jogugi@posgrado.upv.es</p>
+            </div>
+      </div>
+
+      <div className={`chat-room ${isDarkMode ? 'chat-room-dark' : 'chat-room-light'}`}>
+        <div className="chat-content">
+          <div className="messages-display">
               <div className="theme-toggle-btn" onClick={toggleTheme}>
                 Cambiar Tema
               </div>
@@ -330,49 +324,59 @@ const Chat = () => {
               </ul>
             </div>
 
-            <div className="input-section">
-              <button className="send-btn" onClick={handleSendMessage}>Enviar</button>
-              <input
-                type="text"
-                placeholder="Escribe tu mensaje..."
-                value={messageText}
-                onChange={handleMessageChange}
-              />
-            </div>
+          <div className="input-section">
+            <button className="send-btn" onClick={handleSendMessage} disabled={isErrorActive}>Enviar</button>
+            <input
+              type="text"
+              placeholder="Escribe tu mensaje..."
+              value={messageText}
+              onChange={handleMessageChange}
+              disabled={isErrorActive} // Deshabilitar campo de entrada si el error está activo
+            />
           </div>
+        </div>
       </div>
+
       <div className="chat-right-column">
         <div className="chat-metricsbox">
-            <Clock />
-            <p><strong>Mensajes enviados:</strong> {messages.length}</p>
-            <p><strong>Usuarios activos:</strong> {aliveUsers.length}</p>
+          <Clock />
+          <p><strong>Mensajes enviados:</strong> {messages.length}</p>
+          <p><strong>Usuarios activos:</strong> {aliveUsers.length}</p>
         </div>
         <div className="chat-active-users-box">
-          <div className="chat-active-users-header">
-            <h3>Usuarios Activos</h3>
-          </div>
-          <ul>
-            {aliveUsers.map((user, index) => (
-              <li key={index}>{user}</li>  
-            ))}
-          </ul>
+            <div className="chat-active-users-header">
+              <h3>Usuarios Activos</h3>
+            </div>
+            <ul>
+              {aliveUsers.map((user, index) => (
+                <li key={index}>{user}</li>  
+              ))}
+            </ul>
         </div>
-        <div className="error-message">
+              {/* Banner de Cloud Computing */}
+        <div className="chat-banner-cloud">
+          <BannerCloud 
+            imageUrl="../../public/images/cloudcomm.png"
+            titleSlogan="Inteligencia Aplicada en la Nube"
+            subtitleSlogan="Soluciones avanzadas en Cloud, Clusters y Serverless para un futuro más eficiente"
+          />
+        </div>
+        <div className="chat-error-message">
           <WErrorMessage
-            message              = {errorMessage || ''} 
-            showError            = {showError}
-            closeErrorMessage    = {closeErrorMessage}
-            minimizeErrorMessage = {minimizeErrorMessage}
-            restoreErrorMessage  = {restoreErrorMessage}
-            minimized            = {minimized}
-            iconType             = {showError ? "error" : "info"} 
+            message={errorMessage || ''}
+            showError={showError}
+            closeErrorMessage={closeErrorMessage}
+            minimizeErrorMessage={minimizeErrorMessage}
+            restoreErrorMessage={restoreErrorMessage}
+            minimized={minimized}
+            iconType="error" // O "info", dependiendo de tu caso
           />
         </div>
         <button id="logoutButton" className="logout-btn" onClick={logoutAndRedirect}>Salir</button>
       </div>
-      
-     </div>
+    </div>
   );
 };
-
 export default Chat;
+
+ 

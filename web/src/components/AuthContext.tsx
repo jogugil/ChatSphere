@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useMemo } from 'react';
 
 interface AuthContextType {
   token: string;
@@ -19,22 +19,35 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [roomId, setRoomId] = useState('');
   const [roomName, setRoomName] = useState('');
 
+  // Memorizamos el valor del contexto para evitar re-renderizados innecesarios
+  const value = useMemo(() => ({
+    token, 
+    nickName, 
+    roomId, 
+    roomName, 
+    setToken, 
+    setNickName, 
+    setRoomId, 
+    setRoomName
+  }), [token, nickName, roomId, roomName]); // Dependencias para re-memorizar solo cuando cambia el estado
+
   // Agregar console.log aquí para ver los valores en la consola
   console.log('AuthContext State:', { token, nickName, roomId, roomName });
 
   return (
-    <AuthContext.Provider value={{ token, nickName, roomId, roomName, setToken, setNickName, setRoomId, setRoomName }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
 };
 
 export const useAuth = () => {
- 
   const context = useContext(AuthContext);
   console.log('useAuth State context:', { context });
+
   if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
+
   return context;
 };

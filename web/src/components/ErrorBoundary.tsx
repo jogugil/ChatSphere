@@ -1,23 +1,52 @@
-import React, { Component, ReactNode } from 'react';
+import React, { Component, ErrorInfo, ReactNode } from 'react';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
 }
 
-class ErrorBoundary extends Component<ErrorBoundaryProps> {
-  state = { hasError: false };
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error: Error | null;
+  errorInfo: ErrorInfo | null;
+}
 
-  static getDerivedStateFromError(error: Error) {
-    return { hasError: true };
+class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = { 
+      hasError: false,
+      error: null,
+      errorInfo: null 
+    };
   }
 
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.log("Error caught in Error Boundary", error, errorInfo);
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    // Actualiza el estado para que el siguiente renderizado muestre la UI de "Error"
+    return { hasError: true, error: error, errorInfo: null };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
+    // Puedes loguear el error a un servicio de reporte de errores
+    console.error('ErrorBoundary caught an error', error, errorInfo);
+    this.setState({
+      errorInfo: errorInfo
+    });
   }
 
   render() {
     if (this.state.hasError) {
-      return <h1>Algo salió mal. Intenta nuevamente más tarde.</h1>;
+      // Puedes renderizar cualquier interfaz personalizada de error
+      return (
+        <div>
+          <h1>Algo salió mal.</h1>
+          <details>
+            <summary>Detalles del error</summary>
+            {this.state.error && this.state.error.toString()}
+            <br />
+            {this.state.errorInfo?.componentStack}
+          </details>
+        </div>
+      );
     }
 
     return this.props.children; 
@@ -25,4 +54,3 @@ class ErrorBoundary extends Component<ErrorBoundaryProps> {
 }
 
 export default ErrorBoundary;
-

@@ -25,14 +25,14 @@ const Login: React.FC = () => {
         setErrorMessage('El nickname ya está en uso. Intenta con otro.');
         setShowError(true);
         console.log("Mostrar error: Nickname ya en uso");
-        return;
+        return; // No hacer redirect aún
       }
 
       if (response.status === 'nok') {
         setErrorMessage(response.message || 'Error desconocido al iniciar sesión.');
         setShowError(true);
         console.log("Mostrar error: Error desconocido");
-        return;
+        return; // No hacer redirect aún
       }
 
       if (response.status === 'ok') {
@@ -40,7 +40,7 @@ const Login: React.FC = () => {
         setToken(response.token);
         setRoomId(response.roomid); // Establece roomid
         setRoomName(response.roomname); // Establece roomname
-        navigate('/chat');
+        navigate('/chat');  // Redirigir solo si el login es exitoso
       }
     } catch (error) {
       setErrorMessage('Hubo un error al intentar iniciar sesión. Intenta de nuevo.');
