@@ -12,7 +12,7 @@ const Login: React.FC = () => {
   const [minimized, setMinimized] = useState<boolean>(false);
 
   const navigate = useNavigate();
-  const { setNickName: setAuthNickname, setToken } = useAuth();
+  const { setNickName: setAuthNickname, setToken, setRoomId, setRoomName } = useAuth();
 
   const handleLogin = async () => {
     console.log("Intentando iniciar sesión...");
@@ -38,6 +38,8 @@ const Login: React.FC = () => {
       if (response.status === 'ok') {
         setAuthNickname(nicknamelogin);
         setToken(response.token);
+        setRoomId(response.roomid); // Establece roomid
+        setRoomName(response.roomname); // Establece roomname
         navigate('/chat');
       }
     } catch (error) {
@@ -111,3 +113,6 @@ const Login: React.FC = () => {
 };
 
 export default Login;
+
+
+

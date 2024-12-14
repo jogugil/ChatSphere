@@ -8,7 +8,7 @@ export type UUID = string;
 
 // Clase Room que implementa la interfaz RoomChat y valida el idRoom
 export class Room implements RoomChat {
-  _roomId: UUID = "00000000-0000-0000-0000-000000000000"; 
+  _roomid: UUID = "00000000-0000-0000-0000-000000000000"; 
   nombre: string;
   usuarios: string[];
   messages: Message[] = [];
@@ -22,7 +22,7 @@ export class Room implements RoomChat {
 
   // Getter y Setter para idRoom
   get roomId(): UUID {
-    return this._roomId;
+    return this._roomid;
   }
 
   set roomId(value: string) {
@@ -30,7 +30,7 @@ export class Room implements RoomChat {
     if (!validateUUID(value)) {
       throw new Error('El ID de la sala no es un UUID válido');
     }
-    this._roomId = value; // Si la validación pasa, asigna el valor
+    this._roomid = value; // Si la validación pasa, asigna el valor
   }
 
   // Getter y Setter para nombre
@@ -93,17 +93,17 @@ export class Room implements RoomChat {
       const response: ResponseUser = JSON.parse(json);
 
       // Validamos que la sala del JSON coincida con la sala de la instancia
-      if (response.roomId !== this.roomId) {
+      if (response.roomid !== this.roomId) {
         console.log("La sala en el JSON no coincide con la sala de la instancia.");
         return;
       }
 
       // Añadir los usuarios activos a la lista de usuarios de la sala
-      response.usersAlive.forEach(usuario => {
+      response.usersalive.forEach(usuario => {
         this.addUser(usuario.nickname); // Añade cada usuario a la sala
       });
 
-      console.log(`${response.usersAlive.length} usuarios añadidos a la sala.`);
+      console.log(`${response.usersalive.length} usuarios añadidos a la sala.`);
     } catch (error) {
       console.error("Error al procesar el JSON:", error);
     }
@@ -120,9 +120,9 @@ export class Room implements RoomChat {
           return;
       }
 
-      // Verificamos si el idSala coincide
-      if (response.idSala !== this.roomId) {
-          console.log("El idSala no coincide.");
+      // Verificamos si el roomId coincide
+      if (response.roomId !== this.roomid) {
+          console.log("El roomId no coincide.");
           return;
       }
 

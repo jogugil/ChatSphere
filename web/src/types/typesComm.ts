@@ -7,7 +7,7 @@ export interface MessageResponse {
     messages: string;
     tokenSesion: string;
     nickname: string;
-    idSala: string;
+    roomId: string;
     ListMessage: MessageList[];
 }
 
@@ -20,7 +20,7 @@ export interface MessageList {
 // Estructuras que defines para usuarios y respuestas
 export interface  UsersAlive {
     nickname: string;
-    acttionLastDate: string;
+    acttionlastdate: string;
   };
   
 export interface ResponseUser  {
@@ -28,8 +28,8 @@ export interface ResponseUser  {
     message: string;
     tokenSesion: string;
     nickname: string;
-    roomId: string;
-    usersAlive: UsersAlive[];
+    roomid: string;
+    usersalive: UsersAlive[];
   };
 
 
@@ -38,12 +38,12 @@ export interface LoginResponse {
     message: string;
     token: string;
     nickname: string;
-    idsala: UUID;
-    namesala: string;
+    roomid: UUID;
+    roomname: string;
   }
 
 export interface JwtPayload {
-    userId: string;
+    userid: string;
     username: string;
     exp?: number;  // La expiración es opcional
   }

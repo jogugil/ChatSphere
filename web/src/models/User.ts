@@ -19,11 +19,9 @@ export class User {
     this.status = status;
     this.roomId = roomId; // Esto llamará al setter que valida el UUID
     this.roomName = roomName; // Esto llamará al setter que valida el UUID
-    if (token) {        
-        this.token = TOKEN_NULO;
-    } else  {
-        this.token = token;
-    }
+    
+    console.log(`Creando el objeto user: nick: ${nickname}, status: ${status}, roomid: ${roomId}, roomname: ${roomName}, token: ${token}`);
+    this.token = token || TOKEN_NULO;
   }
   // Getter para _token
   get token(): string {
@@ -52,7 +50,7 @@ export class User {
     // Verifica si el token ha expirado
     private tokenIsValid(expiration: number | undefined): boolean {
         if (expiration === undefined) {
-        return false; // Si no hay fecha de expiración, no es válido
+          return false; // Si no hay fecha de expiración, no es válido
         }
 
         const now = Math.floor(Date.now() / 1000); // Obtenemos la fecha y hora actual en segundos
@@ -65,20 +63,21 @@ export class User {
   getUserIdFromToken(): string | null {
     try {
       const decoded = <JwtPayload>jwtDecode(this._token);
-      return decoded ? decoded.userId : null;
+      console.log ("decode token",decoded);
+      return decoded ? decoded.userid : null;
     } catch (error) {
       console.error('Error al obtener el ID del token:', error);
       return null;
     }
   } 
-    // Getter y Setter para idSala
+    // Getter y Setter para roomId
     get roomName(): UUID {
       return this._roomName;
     }
     set roomName(value: string) {
       this._roomName = value; // Si la validación pasa, asigna el valor
     }
-    // Getter y Setter para idSala
+    // Getter y Setter para roomId
     get roomId(): UUID {
         return this._roomId;
     }

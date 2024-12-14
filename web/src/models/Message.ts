@@ -7,14 +7,14 @@ export class Message implements MessageData {
     message: string;
     fecha: string;
   
-    private _idRoom: UUID = "00000000-0000-0000-0000-000000000000"; 
+    private _roomId: UUID = "00000000-0000-0000-0000-000000000000"; 
     private _idMessage: UUID = "00000000-0000-0000-0000-000000000000"; 
 
-    constructor(nickname: string, message: string, fecha: string, idMessage: string, idRoom: string) {
+    constructor(nickname: string, message: string, fecha: string, idMessage: string, roomId: string) {
       this.nickname = nickname;
       this.message = message;
       this.fecha = fecha;
-      this.idRoom = idRoom; // Esto llamará al setter que valida el UUID
+      this.roomId = roomId; // Esto llamará al setter que valida el UUID
       this.idMessage = idMessage; // Esto llamará al setter que valida el UUID
     }
  
@@ -29,14 +29,14 @@ export class Message implements MessageData {
         this._idMessage = value; // Si la validación pasa, asigna el valor
     }
     // Getter y Setter para idSala
-    get idRoom(): UUID {
-        return this._idRoom;
+    get roomId(): UUID {
+        return this._roomId;
     }
-    set idRoom(value: string) {
+    set roomId(value: string) {
         if (!validateUUID(value)) {
             throw new Error('El ID de la sala no es un UUID válido');
         }
-        this._idRoom = value; // Si la validación pasa, asigna el valor
+        this._roomId = value; // Si la validación pasa, asigna el valor
     }
     
   }

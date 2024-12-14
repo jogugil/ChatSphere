@@ -20,8 +20,8 @@ type LoginResponse struct {
 	Message  string `json:"message"`
 	Token    string `json:"token"`
 	Nickname string `json:"nickname"`
-	Idsala   string `json:"idsala"`
-	Namesala string `json:"namesala"`
+	RoomId   string `json:"roomid"`
+	RoomName string `json:"roomname"`
 }
 
 type MessageResponse struct {
@@ -297,8 +297,8 @@ func main() {
 	}
 	fmt.Printf("LloginResp.status: %s \n", loginResp.Status)
 	fmt.Printf("LloginResp.Message: %s \n", loginResp.Message)
-	fmt.Printf("Login exitoso! Token: %s, Sala: %s\n", loginResp.Token, loginResp.Namesala)
-	fmt.Printf("LloginResp.Idsala: %s \n", loginResp.Idsala)
+	fmt.Printf("Login exitoso! Token: %s, Sala: %s\n", loginResp.Token, loginResp.RoomName)
+	fmt.Printf("LloginResp.Idsala: %s \n", loginResp.RoomId)
 
 	// Pedir el primer mensaje
 	fmt.Print("Introduce el mensaje a enviar: ")
@@ -308,7 +308,7 @@ func main() {
 	mensaje = scanner.Text()
 
 	// Enviar el primer mensaje
-	err = enviarMensaje(loginResp.Token, loginResp.Idsala, loginResp.Nickname, mensaje)
+	err = enviarMensaje(loginResp.Token, loginResp.RoomId, loginResp.Nickname, mensaje)
 	if err != nil {
 		log.Fatalf("Error al enviar el mensaje: %v", err)
 	}
@@ -324,7 +324,7 @@ func main() {
 	stopCh := make(chan bool)
 
 	// Iniciar el goroutine para ejecutar las peticiones periódicas
-	go ejecutarPeticionesPeriodicas(conn, loginResp.Nickname, loginResp.Idsala, loginResp.Token, stopCh)
+	go ejecutarPeticionesPeriodicas(conn, loginResp.Nickname, loginResp.RoomId, loginResp.Token, stopCh)
 
 	// Mantener el programa activo hasta recibir una señal de detención o desconexión
 	// Función para esperar la detención del programa sin bloquear el hilo principal
@@ -334,7 +334,7 @@ func main() {
 	}()
 
 	//Intentamos recuperar los usuarios activos
-	usuarios, err_u1 := obtenerUsuarios(conn, loginResp.Nickname, loginResp.Idsala, loginResp.Token)
+	usuarios, err_u1 := obtenerUsuarios(conn, loginResp.Nickname, loginResp.RoomId, loginResp.Token)
 	if err_u1 != nil {
 		log.Fatalf("Error al obtener usuarios 1: %v", err_u1)
 	} else {
@@ -344,7 +344,7 @@ func main() {
 	}
 
 	// Obtener los mensajes
-	mensajes, err := obtenerMensajes(conn, loginResp.Nickname, loginResp.Idsala, loginResp.Token, "00000000-0000-0000-0000-000000000000")
+	mensajes, err := obtenerMensajes(conn, loginResp.Nickname, loginResp.RoomId, loginResp.Token, "00000000-0000-0000-0000-000000000000")
 	if err != nil {
 		log.Fatalf("Error al obtener mensajes: %v", err)
 	} else {
@@ -362,14 +362,14 @@ func main() {
 	mensaje2 := scanner.Text()
 
 	// Enviar el segundo mensaje
-	err = enviarMensaje(loginResp.Token, loginResp.Idsala, loginResp.Nickname, mensaje2)
+	err = enviarMensaje(loginResp.Token, loginResp.RoomId, loginResp.Nickname, mensaje2)
 	if err != nil {
 		log.Fatalf("Error al enviar el mensaje: %v", err)
 	}
 	fmt.Println("Segundo mensaje enviado correctamente")
 
 	// Intentamos recuperar la lista de mensajes nuevos (el segundo mensaje enviado)
-	mensajes, err_m2 := obtenerMensajes(conn, loginResp.Nickname, loginResp.Idsala, loginResp.Token, "00000000-0000-0000-0000-000000000000")
+	mensajes, err_m2 := obtenerMensajes(conn, loginResp.Nickname, loginResp.RoomId, loginResp.Token, "00000000-0000-0000-0000-000000000000")
 	if err_m2 != nil {
 		log.Fatalf("Error al obtener mensajes: %v", err_m2)
 	} else {
@@ -379,7 +379,7 @@ func main() {
 	}
 
 	//Intentamos recuperar los usuarios activos
-	usuarios, err_u := obtenerUsuarios(conn, loginResp.Nickname, loginResp.Idsala, loginResp.Token)
+	usuarios, err_u := obtenerUsuarios(conn, loginResp.Nickname, loginResp.RoomId, loginResp.Token)
 	if err_u != nil {
 		log.Fatalf("Error al obtener usuarios 2: %v", err_u)
 	} else {

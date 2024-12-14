@@ -38,7 +38,7 @@ func LoginHandler(c *gin.Context) {
 	// Obtener la instancia del singleton
 	secMod, err := services.GetSecModServidorChat()
 	if err != nil {
-		// Si el IdSala no es un UUID válido, devolver un error
+		// Si el RoomId no es un UUID válido, devolver un error
 		log.Printf("Error al obtener el servidor chat. : %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status":  "nok",

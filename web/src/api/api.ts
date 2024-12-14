@@ -38,8 +38,8 @@ export const login = async (nickname: string): Promise<LoginResponse> => {
       message: data.message || 'Error desconocido',
       token: data.token || '',
       nickname: data.nickname || nickname,
-      idsala: data.idsala || '',
-      namesala: data.namesala || '',
+      roomid: data.roomid || '',
+      roomname: data.roomname || '',
     } as LoginResponse;
   } catch (error: any) {
     console.error('Error during login:', error);
@@ -51,8 +51,8 @@ export const login = async (nickname: string): Promise<LoginResponse> => {
         message: 'El servidor GoChat no está disponible. Disculpe las molestias.',
         token: '',
         nickname: nickname,
-        idsala: '',
-        namesala: '',
+        roomid: '',
+        roomname: '',
       } as LoginResponse;
     }
 
@@ -62,8 +62,8 @@ export const login = async (nickname: string): Promise<LoginResponse> => {
       message: 'Error durante el login. Inténtelo de nuevo más tarde.',
       token: '',
       nickname: nickname,
-      idsala: '',
-      namesala: '',
+      roomid: '',
+      roomname: '',
     } as LoginResponse;
   }
 };
