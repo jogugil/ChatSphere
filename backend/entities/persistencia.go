@@ -6,11 +6,11 @@ import (
 )
 
 type Persistencia interface {
-	GuardarUsuario(usuario *Usuario) error
-	GuardarSala(sala Sala) error
-	ObtenerSala(id uuid.UUID) (Sala, error)
-	GuardarMensaje(mensaje *Mensaje) error
-	GuardarMensajesEnBaseDeDatos(mensajes []Mensaje) error
-	ObtenerMensajesDesdeSala(idSala uuid.UUID) ([]Mensaje, error)
-	ObtenerMensajesDesdeId(idSala uuid.UUID, idMensaje uuid.UUID) ([]Mensaje, error)
+	GuardarUsuario(usuario *User) error
+	GuardarSala(sala Room) error
+	ObtenerSala(id uuid.UUID) (Room, error)
+	GuardarMensaje(mensaje *Message) error
+	GuardarMensajesEnBaseDeDatos(mensajes []Message) error
+	ObtenerMensajesDesdeSala(idSala uuid.UUID) ([]Message, error)
+	ObtenerMensajesDesdeId(idSala uuid.UUID, idMensaje uuid.UUID) ([]Message, error)
 }

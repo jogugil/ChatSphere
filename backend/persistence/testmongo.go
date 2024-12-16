@@ -24,7 +24,7 @@ func TestTuFuncionMongoDB() {
 		log.Printf("error a poner nil una sla del usuario: %v", err)
 	}
 	// Crear un usuario de prueba
-	usuario := &entities.Usuario{
+	usuario := &entities.User{
 		UserId:         uuid.New().String(),
 		Nickname:       "usuario_test",
 		Token:          "token_123",
@@ -47,9 +47,9 @@ func TestTuFuncionMongoDB() {
 	}
 
 	// 2. Test de GuardarSala
-	sala := entities.Sala{
-		ID:   uuid.New(),
-		Name: "SalaTest",
+	sala := entities.Room{
+		RoomId:   uuid.New(),
+		RoomName: "SalaTest",
 	}
 	fmt.Println("Iniciando prueba de GuardarSala...")
 	startTime = time.Now()
@@ -64,7 +64,7 @@ func TestTuFuncionMongoDB() {
 	// 3. Test de ObtenerSala
 	fmt.Println("Iniciando prueba de ObtenerSala...")
 	startTime = time.Now()
-	_, err = (*persistencia).ObtenerSala(sala.ID)
+	_, err = (*persistencia).ObtenerSala(sala.RoomId)
 	duration = time.Since(startTime)
 	if err != nil {
 		fmt.Printf("Error en ObtenerSala: %v\n", err)
@@ -73,14 +73,14 @@ func TestTuFuncionMongoDB() {
 	}
 
 	// 4. Test de GuardarMensaje
-	mensaje := &entities.Mensaje{
-		IDM:        uuid.New(),
-		Nickname:   "usuario_test",
-		FechaEnvio: time.Now(),
-		IdSala:     sala.ID,
-		NombreSala: sala.Name,
-		Token:      "token_123",
-		Mensaje:    "Este es un mensaje de prueba",
+	mensaje := &entities.Message{
+		MessageId:   uuid.New(),
+		Nickname:    "usuario_test",
+		SendDate:    time.Now(),
+		RoomID:      sala.RoomId,
+		RoomName:    sala.RoomName,
+		Token:       "token_123",
+		MessageText: "Este es un mensaje de prueba",
 	}
 	fmt.Println("Iniciando prueba de GuardarMensaje...")
 	startTime = time.Now()
@@ -95,7 +95,7 @@ func TestTuFuncionMongoDB() {
 	// 5. Test de ObtenerMensajesDesdeSala
 	fmt.Println("Iniciando prueba de ObtenerMensajesDesdeSala...")
 	startTime = time.Now()
-	_, err = (*persistencia).ObtenerMensajesDesdeSala(sala.ID)
+	_, err = (*persistencia).ObtenerMensajesDesdeSala(sala.RoomId)
 	duration = time.Since(startTime)
 	if err != nil {
 		fmt.Printf("Error en ObtenerMensajesDesdeSala: %v\n", err)
@@ -106,7 +106,7 @@ func TestTuFuncionMongoDB() {
 	// 6. Test de ObtenerMensajesDesdeId
 	fmt.Println("Iniciando prueba de ObtenerMensajesDesdeId...")
 	startTime = time.Now()
-	_, err = (*persistencia).ObtenerMensajesDesdeId(sala.ID, mensaje.IDM)
+	_, err = (*persistencia).ObtenerMensajesDesdeId(sala.RoomId, mensaje.MessageId)
 	duration = time.Since(startTime)
 	if err != nil {
 		fmt.Printf("Error en ObtenerMensajesDesdeId: %v\n", err)

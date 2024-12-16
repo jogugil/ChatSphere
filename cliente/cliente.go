@@ -25,27 +25,27 @@ type LoginResponse struct {
 }
 
 type MessageResponse struct {
-	IdMensaje uuid.UUID `json:"idMensaje"`
-	Nickname  string    `json:"nickname"`
-	Texto     string    `json:"texto"`
+	MessageId   uuid.UUID `json:"messageid"`
+	Nickname    string    `json:"nickname"`
+	MessageText string    `json:"messagetext"`
 }
 
 // Estructura para la respuesta
-type Response struct {
+type ResponseListMessage struct {
 	Status      string            `json:"status"`
 	Message     string            `json:"message"`
 	TokenSesion string            `json:"tokenSesion"`
 	Nickname    string            `json:"nickname"`
-	IdSala      string            `json:"idSala"`
+	RoomId      string            `json:"roomid"`
 	ListMessage []MessageResponse `json:"data,omitempty"` // Lista de mensajes si existen
 }
 
 // Estructura de datos para enviar en la solicitud
 type RequestUserData struct {
-	IdSala      string `json:"idSala"`
+	RoomId      string `json:"idSala"`
 	TokenSesion string `json:"tokenSesion"`
 	Nickname    string `json:"nickname"`
-	Operacion   string `json:"operacion"`
+	Operation   string `json:"operation"`
 }
 
 // Estructura de la respuesta esperada
@@ -101,10 +101,10 @@ func enviarMensaje(token, idsala, nickName, mensaje string) error {
 	// Crear los datos para el mensaje
 	data := map[string]string{
 		"nickname":     nickName, // Cambiar por el nickname
-		"idsala":       idsala,
-		"namesala":     "SalaEjemplo", // Cambiar por el nombre de la sala
+		"roomid":       idsala,
+		"roomname":     "SalaEjemplo", // Cambiar por el nombre de la sala
 		"tokensession": token,
-		"mensaje":      mensaje,
+		"message":      mensaje,
 	}
 	jsonData, err := json.Marshal(data)
 	if err != nil {
@@ -164,11 +164,12 @@ func conectarWebSocket() (*websocket.Conn, error) {
 func obtenerMensajes(conn *websocket.Conn, nickname, idsala, token, ultimoIdMensaje string) ([]MessageResponse, error) {
 	// Crear el mensaje de solicitud
 	requestData := map[string]string{
-		"operacion":       "listmenssage",
-		"nickName":        nickname,
-		"idSala":          idsala,
-		"tokenSesion":     token,
-		"idUltimoMensaje": ultimoIdMensaje,
+		"operation":     "listmenssage",
+		"nickname":      nickname,
+		"roomid":        idsala,
+		"tokensesion":   token,
+		"lastmessageid": ultimoIdMensaje,
+		"x_gochat":      "http://localhost:8081",
 	}
 
 	// Convertir a JSON
@@ -188,29 +189,32 @@ func obtenerMensajes(conn *websocket.Conn, nickname, idsala, token, ultimoIdMens
 	if err != nil {
 		return nil, err
 	}
-
+	fmt.Printf("MENSAJE RECIBIDO (como string): %s\n", string(msg))
 	// Verificar si la respuesta es un objeto único o un array de mensajes
-	var mensajeIndividual Response
+	var mensajeIndividual ResponseListMessage
 	err = json.Unmarshal(msg, &mensajeIndividual)
 	if err != nil {
 		// Si no hubo error al deserializar como mensaje individual, lo empaquetamos en un slice
 		return nil, fmt.Errorf("error al deserializar la respuesta lista de mensajes nuevos: %v", err)
 	}
+	fmt.Printf("MENSAJE DE LSITADO : %v\n", mensajeIndividual)
 	return mensajeIndividual.ListMessage, nil
 }
 
 func obtenerUsuarios(conn *websocket.Conn, nickname, idsala, token string) (ResponseUser, error) {
 	// Declarar la estructura RequestUserData fuera de la llamada de la función
 	requestData := struct {
-		IdSala      string `json:"idSala"`
-		TokenSesion string `json:"tokenSesion"`
+		RoomId      string `json:"roomid"`
+		TokenSesion string `json:"tokensesion"`
 		Nickname    string `json:"nickname"`
-		Operacion   string `json:"operacion"`
+		Operation   string `json:"operation"`
+		X_GoChat    string `json:"x_gochat"`
 	}{
-		IdSala:      idsala,
+		RoomId:      idsala,
 		TokenSesion: token,
 		Nickname:    nickname,
-		Operacion:   "listusers",
+		Operation:   "listusers",
+		X_GoChat:    "http://localhost:8081",
 	}
 
 	// Convertir a JSON
@@ -404,9 +408,9 @@ func main() {
 func MostrarMensajes(mensajes []MessageResponse) {
 	for i, mensaje := range mensajes {
 		fmt.Printf("Mensaje %d:\n", i+1)
-		fmt.Printf("  ID: %s\n", mensaje.IdMensaje.String())
+		fmt.Printf("  ID: %s\n", mensaje.MessageId.String())
 		fmt.Printf("  Nickname: %s\n", mensaje.Nickname)
-		fmt.Printf("  Texto: %s\n", mensaje.Texto)
+		fmt.Printf("  Texto: %s\n", mensaje.MessageText)
 	}
 }
 

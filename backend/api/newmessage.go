@@ -8,14 +8,14 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
-
+ 
 func NewMessageHandler(c *gin.Context) {
 	var requestData struct {
 		Nickname    string `json:"nickname"`
-		IdSala      string `json:"idsala"`
-		NameSala    string `json:"namesala"`
+		RoomId      string `json:"roomid"`
+		RoomName    string `json:"roomname"`
 		TokenSesion string `json:"tokensession"`
-		Mensaje     string `json:"mensaje"`
+		Message     string `json:"message"`
 	}
 
 	// Decodificar los datos JSON de la solicitud
@@ -46,7 +46,7 @@ func NewMessageHandler(c *gin.Context) {
 		return
 	}
 	// Parsear el IdSala como UUID
-	idSalaUUID, err := uuid.Parse(requestData.IdSala)
+	idSalaUUID, err := uuid.Parse(requestData.RoomId)
 	if err != nil {
 		// Si el IdSala no es un UUID válido, devolver un error
 		log.Printf("Error al parsear IdSala: %v", err)
@@ -58,7 +58,7 @@ func NewMessageHandler(c *gin.Context) {
 	}
 
 	// Llamar al método para enviar el mensaje
-	err = secMod.EjecutarEnvioMensaje(requestData.Nickname, requestData.TokenSesion, requestData.Mensaje, idSalaUUID)
+	err = secMod.EjecutarEnvioMensaje(requestData.Nickname, requestData.TokenSesion, requestData.Message, idSalaUUID)
 	if err != nil {
 		// Log para mostrar error al intentar enviar el mensaje
 		log.Printf("Error al enviar el mensaje: %v", err)
@@ -72,7 +72,7 @@ func NewMessageHandler(c *gin.Context) {
 	}
 
 	// Log para confirmar que el mensaje fue enviado exitosamente
-	log.Printf("Mensaje enviado exitosamente a la sala %s: %s", requestData.NameSala, requestData.Mensaje)
+	log.Printf("Mensaje enviado exitosamente a la sala %s: %s", requestData.RoomName, requestData.Message)
 
 	// Responder con un JSON de éxito si el mensaje se envía correctamente
 	c.JSON(http.StatusOK, gin.H{

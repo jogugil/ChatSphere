@@ -7,14 +7,14 @@ export class Message implements MessageData {
     message: string;
     fecha: string;
   
-    private _roomId: UUID = "00000000-0000-0000-0000-000000000000"; 
+    private _roomId: UUID    = "00000000-0000-0000-0000-000000000000"; 
     private _idMessage: UUID = "00000000-0000-0000-0000-000000000000"; 
 
     constructor(nickname: string, message: string, fecha: string, idMessage: string, roomId: string) {
-      this.nickname = nickname;
-      this.message = message;
-      this.fecha = fecha;
-      this.roomId = roomId; // Esto llamará al setter que valida el UUID
+      this.nickname  = nickname;
+      this.message   = message;
+      this.fecha     = fecha;
+      this.roomId    = roomId;    // Esto llamará al setter que valida el UUID
       this.idMessage = idMessage; // Esto llamará al setter que valida el UUID
     }
  

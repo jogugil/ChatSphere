@@ -66,7 +66,7 @@ func ObtenerInstanciaDB() (*entities.Persistencia, error) {
 }
 
 // Implementa GuardarSala
-func (m *MongoPersistencia) GuardarSala(sala entities.Sala) error {
+func (m *MongoPersistencia) GuardarSala(sala entities.Room) error {
 	fmt.Printf("Guardando sala: %+v\n", sala)
 	collection := m.db.Collection("salas")
 	_, err := collection.InsertOne(context.TODO(), sala)
@@ -77,21 +77,21 @@ func (m *MongoPersistencia) GuardarSala(sala entities.Sala) error {
 }
 
 // Implementa ObtenerSala
-func (m *MongoPersistencia) ObtenerSala(id uuid.UUID) (entities.Sala, error) {
+func (m *MongoPersistencia) ObtenerSala(id uuid.UUID) (entities.Room, error) {
 	fmt.Printf("Obteniendo sala con ID: %s\n", id)
-	var sala entities.Sala
+	var sala entities.Room
 	collection := m.db.Collection("salas")
 	err := collection.FindOne(context.TODO(), bson.M{"id": id}).Decode(&sala)
 	if err != nil {
 		fmt.Printf("Error al obtener la sala: %v\n", err)
-		return entities.Sala{}, err
+		return entities.Room{}, err
 	}
 	fmt.Printf("Sala obtenida: %+v\n", sala)
 	return sala, nil
 }
 
 // GuardarMensaje guarda un solo mensaje en la base de datos MongoDB
-func (mp *MongoPersistencia) GuardarMensaje(mensaje *entities.Mensaje) error {
+func (mp *MongoPersistencia) GuardarMensaje(mensaje *entities.Message) error {
 	fmt.Printf("Guardando mensaje: %+v\n", mensaje)
 	collection := mp.db.Collection("mensajes")
 	_, err := collection.InsertOne(context.TODO(), mensaje)
@@ -104,7 +104,7 @@ func (mp *MongoPersistencia) GuardarMensaje(mensaje *entities.Mensaje) error {
 }
 
 // GuardarMensajesEnBaseDeDatos guarda una lista de mensajes en MongoDB
-func (mp *MongoPersistencia) GuardarMensajesEnBaseDeDatos(mensajes []entities.Mensaje) error {
+func (mp *MongoPersistencia) GuardarMensajesEnBaseDeDatos(mensajes []entities.Message) error {
 	fmt.Printf("Guardando lista de %d mensajes\n", len(mensajes))
 	collection := mp.db.Collection("mensajes")
 
@@ -113,15 +113,13 @@ func (mp *MongoPersistencia) GuardarMensajesEnBaseDeDatos(mensajes []entities.Me
 	for _, mensaje := range mensajes {
 		documentos = append(documentos, bson.D{
 			{Key: "nick_usuario", Value: mensaje.Nickname},
-			{Key: "fecha_envio", Value: mensaje.FechaEnvio},
-			{Key: "id_sala", Value: mensaje.IdSala},
-			{Key: "nombre_sala", Value: mensaje.NombreSala},
-			{Key: "token_sesion", Value: mensaje.Token},
-			{Key: "texto_mensaje", Value: mensaje.Mensaje},
+			{Key: "fecha_envio", Value: mensaje.SendDate},
+			{Key: "id_sala", Value: mensaje.RoomID},
+			{Key: "nombre_sala", Value: mensaje.RoomName},
 		})
 	}
 
-	// Usamos InsertMany para insertar varios mensajes a la vez
+	// Insertamos todos los documentos en la colección
 	_, err := collection.InsertMany(context.TODO(), documentos)
 	if err != nil {
 		fmt.Printf("Error al guardar los mensajes en MongoDB: %v\n", err)
@@ -133,12 +131,12 @@ func (mp *MongoPersistencia) GuardarMensajesEnBaseDeDatos(mensajes []entities.Me
 	return nil
 }
 
-func (mp *MongoPersistencia) ObtenerMensajesDesdeSala(idSala uuid.UUID) ([]entities.Mensaje, error) {
+func (mp *MongoPersistencia) ObtenerMensajesDesdeSala(idSala uuid.UUID) ([]entities.Message, error) {
 	fmt.Printf("Obteniendo mensajes desde la sala con ID: %s\n", idSala)
 	collection := mp.db.Collection("mensajes")
 
 	// Buscar el mensaje base
-	var mensajeBase entities.Mensaje
+	var mensajeBase entities.Message
 	filterBase := bson.D{{Key: "id_sala", Value: idSala}}
 	err := collection.FindOne(context.TODO(), filterBase).Decode(&mensajeBase)
 	if err != nil {
@@ -157,9 +155,9 @@ func (mp *MongoPersistencia) ObtenerMensajesDesdeSala(idSala uuid.UUID) ([]entit
 	}
 	defer cursor.Close(context.TODO())
 
-	var mensajes []entities.Mensaje
+	var mensajes []entities.Message
 	for cursor.Next(context.TODO()) {
-		var mensaje entities.Mensaje
+		var mensaje entities.Message
 		if err := cursor.Decode(&mensaje); err != nil {
 			fmt.Printf("Error al decodificar el mensaje: %v\n", err)
 			return nil, fmt.Errorf("error al decodificar el mensaje: %v", err)
@@ -176,12 +174,12 @@ func (mp *MongoPersistencia) ObtenerMensajesDesdeSala(idSala uuid.UUID) ([]entit
 	return mensajes, nil
 }
 
-func (mp *MongoPersistencia) ObtenerMensajesDesdeId(idSala uuid.UUID, idMensaje uuid.UUID) ([]entities.Mensaje, error) {
+func (mp *MongoPersistencia) ObtenerMensajesDesdeId(idSala uuid.UUID, idMensaje uuid.UUID) ([]entities.Message, error) {
 	fmt.Printf("Obteniendo mensajes desde la sala con ID: %s y mensaje con ID: %s\n", idSala, idMensaje)
 	collection := mp.db.Collection("mensajes")
 
 	// Buscar el mensaje base
-	var mensajeBase entities.Mensaje
+	var mensajeBase entities.Message
 	filterBase := bson.D{{Key: "id_mensaje", Value: idMensaje}, {Key: "id_sala", Value: idSala}}
 	err := collection.FindOne(context.TODO(), filterBase).Decode(&mensajeBase)
 	if err != nil {
@@ -196,7 +194,7 @@ func (mp *MongoPersistencia) ObtenerMensajesDesdeId(idSala uuid.UUID, idMensaje 
 	// Filtro para mensajes posteriores
 	filter := bson.D{
 		{Key: "id_sala", Value: idSala},
-		{Key: "fecha_envio", Value: bson.D{{Key: "$gte", Value: mensajeBase.FechaEnvio}}}}
+		{Key: "fecha_envio", Value: bson.D{{Key: "$gte", Value: mensajeBase.SendDate}}}}
 	findOptions := options.Find().SetSort(bson.D{{Key: "fecha_envio", Value: 1}})
 
 	cursor, err := collection.Find(context.TODO(), filter, findOptions)
@@ -206,9 +204,9 @@ func (mp *MongoPersistencia) ObtenerMensajesDesdeId(idSala uuid.UUID, idMensaje 
 	}
 	defer cursor.Close(context.TODO())
 
-	var mensajes []entities.Mensaje
+	var mensajes []entities.Message
 	for cursor.Next(context.TODO()) {
-		var mensaje entities.Mensaje
+		var mensaje entities.Message
 		if err := cursor.Decode(&mensaje); err != nil {
 			fmt.Printf("Error al decodificar el mensaje: %v\n", err)
 			return nil, fmt.Errorf("error al decodificar el mensaje: %v", err)
@@ -224,7 +222,7 @@ func (mp *MongoPersistencia) ObtenerMensajesDesdeId(idSala uuid.UUID, idMensaje 
 	fmt.Printf("Mensajes obtenidos después del ID de mensaje: %d\n", len(mensajes))
 	return mensajes, nil
 }
-func (mp *MongoPersistencia) GuardarUsuario(usuario *entities.Usuario) error {
+func (mp *MongoPersistencia) GuardarUsuario(usuario *entities.User) error {
 	fmt.Printf("Iniciando el guardado del usuario con ID: %s\n", usuario.UserId)
 
 	// Crear un documento BSON a partir del usuario

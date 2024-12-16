@@ -41,7 +41,7 @@ const BannerProgramming: React.FC<BannerProgrammingProps> = ({ imageUrl, titleSl
             <img src="https://upload.wikimedia.org/wikipedia/commons/d/d9/Node.js_logo.svg" alt="Node.js" className="chat-icon" />
             <img src="https://www.typescriptlang.org/images/branding/two-longform.svg" alt="TypeScript" className="chat-icon" />
             <img src="https://upload.wikimedia.org/wikipedia/commons/4/47/React.svg" alt="React" className="chat-icon" />
-            <img src="../../public/images/concepts.png" alt="concepts" className="chat-icon" />
+            <img src="/images/concepts.png" alt="concepts" className="chat-icon" />
           </div>
         )}
       </div>

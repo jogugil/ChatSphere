@@ -31,7 +31,8 @@ func WebSocketHandler(c *gin.Context) {
 			log.Println("Conexión WebSocket cerrada correctamente")
 		}
 	}()
-
+	// Obtener la URL de la solicitud HTTP original
+	urlCliente := c.Request.URL.String()
 	for {
 		_, msg, err := conn.ReadMessage()
 		if err != nil {
@@ -50,10 +51,10 @@ func WebSocketHandler(c *gin.Context) {
 			continue
 		}
 
-		operacion, exists := data["operacion"]
+		operacion, exists := data["operation"]
 		if !exists {
-			log.Println("No se encontró la clave 'operacion' en el mensaje")
-			msgr, _ := json.Marshal(`{"status": "error", "message": "No se encontró la clave 'operacion' en el mensaje"}`)
+			log.Println("No se encontró la clave 'operation' en el mensaje")
+			msgr, _ := json.Marshal(`{"status": "error", "message": "No se encontró la clave 'operation' en el mensaje"}`)
 			conn.WriteMessage(websocket.TextMessage, msgr)
 			continue
 		}
@@ -61,11 +62,11 @@ func WebSocketHandler(c *gin.Context) {
 		var response []byte
 		switch operacion {
 		case "listmenssage":
-			response = callPostListHandler(msg)
+			response = callPostListHandler(msg, urlCliente)
 		case "listusers":
-			response = callPostUsersHandler(msg)
+			response = callPostUsersHandler(msg, urlCliente)
 		case "heat":
-			response = callheatHandler(msg)
+			response = callheatHandler(msg, urlCliente)
 		default:
 			response, _ = json.Marshal(`{"status": "error", "message": "Comando no reconocido"}`)
 		}
@@ -78,25 +79,29 @@ func WebSocketHandler(c *gin.Context) {
 }
 
 // Aquí solo retornas una cadena de texto (JSON) que representa la respuesta
-func callPostListHandler(msg []byte) []byte {
+func callPostListHandler(msg []byte, urlClient string) []byte {
 	// Llamamos a la función correspondiente del API
-	// Aquí debes definir tu lógica de la función, por ejemplo:
-	result := api.PostListHandler(msg) // Llamar a la función de API pasando la request
-	return result                      // Retornamos la respuesta como un string (puede ser un JSON)
+	log.Printf("callPostListHandler: %v", msg)
+	result := api.PostListHandler(msg, urlClient) // Llamar a la función de API pasando la request
+	return result
 }
 
-func callPostUsersHandler(msg []byte) []byte {
+func callPostUsersHandler(msg []byte, urlClient string) []byte {
 	// Llamamos a la función correspondiente del API
-	// Aquí debes definir tu lógica de la función
-	result := api.PostUsersHandler(msg) // Llamar a la función de API pasando la request
-	return result                       // Retornamos la respuesta como un string (puede ser un JSON)
+	log.Printf("callPostUsersHandler: %v", msg)
+	result := api.PostUsersHandler(msg, urlClient) // Llamar a la función de API pasando la request
+	return result
 }
 
 // Tu función que maneja el "heat" y devuelve el código 202
-func callheatHandler(msg []byte) []byte {
+func callheatHandler(msg []byte, urlClient string) []byte {
 	log.Printf("callheatHandler procesando solicitud: %v", msg)
 	// Si todo va bien, se establece el código de estado 202 y se envía la respuesta
-	errorJSON, err := json.Marshal(`{"status": "OK", "message": "Request accepted for processing"}`)
+	errorJSON, err := json.Marshal(map[string]interface{}{
+		"status":   "OK",
+		"x_gochat": urlClient, // Asignamos directamente la variable
+		"message":  "Request accepted for processing",
+	})
 	if err != nil {
 		log.Printf("sendErrorResponse: Error al serializar el mensaje de error:%v", err)
 		return errorJSON

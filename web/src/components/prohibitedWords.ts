@@ -3,7 +3,7 @@
 // Lista de palabras prohibidas
 const prohibitedWords: string[] = [
     // Español
-    "maldición", "vulgaridad", "insulto", "grosería", "estúpido", "idiota", "imbécil",
+    "maldición", "vulgaridad", "insulto", "tonto", "grosería", "estúpido", "idiota", "imbécil",
     "mierda", "puta", "puto", "cabron", "gilipollas", "coño", "zorra", "pendejo", "culero",
   
     // Inglés

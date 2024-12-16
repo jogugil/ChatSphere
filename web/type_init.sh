@@ -1,39 +1,40 @@
 #!/bin/bash
 
-
+# Limpiar la cache de npm (opcional, solo si es necesario)
 npm cache clean --force
+
 # Borrar la carpeta node_modules y el archivo package-lock.json si existen
 rm -rf node_modules package-lock.json
 
 # Inicializar el proyecto con npm (si no lo has hecho ya)
 npm init -y
 
-# Instalar las dependencias esenciales
-npm install jwt-decode
-npm install uuid@latest
-npm i --save-dev @types/node
-npm install typescript@latest --save-dev
-npm install vite@latest --save-dev
-npm install --save-dev @types/uuid
-npm install react react-dom react-router-dom
-npm install react-router-dom axios jsonwebtoken uuid
-npm install eslint@^8.0.0 --save-dev
-npm install eslint-plugin-prettier@^5.0.0 --save-dev
-npm install eslint-config-prettier@^8.0.0 --save-dev
-npm install --save @fortawesome/fontawesome-free
+# Instalar las dependencias principales necesarias para el proyecto
+npm install react react-dom react-router-dom axios jsonwebtoken uuid @fortawesome/fontawesome-free
 
-# Instalar los tipos para react-router-dom y vite
-npm install @types/react-router-dom --save-dev
-npm install vite --save-dev
+# Instalar dependencias de desarrollo (con versiones específicas)
+npm install --save-dev \
+  typescript@latest --save-dev\
+  vite@latest --save-dev \
+  @vitejs/plugin-react@latest --save-dev \
+  @types/node@^22.10.2 \
+  @types/uuid@^10.0.0 \
+  @types/react@^18.0.0 \
+  @types/react-dom@^18.0.0 \
+  @types/react-router-dom@^5.3.3 \
+  eslint@^8.57.1 \
+  eslint-plugin-prettier@^5.2.1 \
+  eslint-config-prettier@^8.10.0 \
+  eslint-plugin-react@^7.32.0 \
+  eslint-plugin-react-hooks@^4.0.0 \
+  prettier@^3.0.0 \
+  dotenv@^16.4.7
 
-# Instalar dependencias de TypeScript
-npm install typescript --save-dev
+# Actualizar todos los paquetes obsoletos (de forma controlada)
+npm outdated
+npm update
 
-# Instalar las dependencias adicionales para el proyecto
-npm install @vitejs/plugin-react --save-dev
-npm install dotenv --save-dev
-
-# POor si existen vulnerabilidades
+# Corregir vulnerabilidades encontradas en las dependencias
 npm audit fix --force
 
 # Crear o actualizar tsconfig.json
@@ -42,16 +43,13 @@ echo '{
     "allowJs": true,
     "checkJs": false,
     "strict": true,
-"lib": ["dom", "esnext"],
+    "lib": ["dom", "esnext"],
     "module": "ESNext",
     "moduleResolution": "Node",
     "jsx": "react-jsx",
     "baseUrl": "./src",
-    
     "outDir": "./dist",
-    
-    "target": "esnext",    
-    
+    "target": "esnext",
     "esModuleInterop": true,
     "skipLibCheck": true,
     "typeRoots": ["node_modules/@types"],
@@ -62,7 +60,9 @@ echo '{
 }' > tsconfig.json
 
 # Crear el archivo .env
-echo 'VITE_API=localhost
+echo 'VITE_API_URL=http:/localhost:8081
+VITE_API=localhost
 VITE_PORT=8081' > .env
-# Instalar todos los módulos de npm y asegurarse de que todo está actualizado
+
+# Instalar dependencias para asegurarse de que todo está actualizado
 npm install

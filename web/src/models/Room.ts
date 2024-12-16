@@ -121,7 +121,7 @@ export class Room implements RoomChat {
       }
 
       // Verificamos si el roomId coincide
-      if (response.roomId !== this.roomid) {
+      if (response.roomId !== this.roomId) {
           console.log("El roomId no coincide.");
           return;
       }

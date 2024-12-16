@@ -50,18 +50,18 @@ func main() {
 	salasManager := secMod.GestionSalas
 
 	// Imprimimos la sala principal
-	fmt.Printf("Sala Principal: %s, ID: %s\n", salasManager.SalaPrincipal.Name, salasManager.SalaPrincipal.ID)
+	fmt.Printf("Sala Principal: %s, ID: %s\n", salasManager.SalaPrincipal.RoomName, salasManager.SalaPrincipal.RoomId)
 
 	// Imprimimos las salas fijas
 	for id, sala := range salasManager.SalasFijas {
-		fmt.Printf("Sala Fija: %s, ID: %s\n", sala.Name, id)
+		fmt.Printf("Sala Fija: %s, ID: %s\n", sala.RoomName, id)
 	}
 
 	r := gin.Default()
 
 	// Middleware CORS
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"*"}, // Cambia "*" por tus orígenes permitidos, por ejemplo, "http://localhost:3000"
+		AllowOrigins:     []string{"*"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "x-gochat"},
 		AllowCredentials: true,
@@ -69,7 +69,14 @@ func main() {
 
 	// Middleware para comprobar el encabezado "x-gochat" en cada solicitud
 	r.Use(func(c *gin.Context) {
-		// Obtener el valor del encabezado "x-gochat"
+		// Si es una solicitud WebSocket, no verificamos el encabezado
+		if c.Request.Method == "GET" && c.Request.URL.Path == "/ws" {
+			// Esto es WebSocket, no verificamos el encabezado aquí
+			c.Next()
+			return
+		}
+
+		// Si no es WebSocket, verificar el encabezado "x-gochat"
 		goChatHeader := c.GetHeader("x-gochat")
 		if goChatHeader == "" {
 			// Si no está presente, devolver error y detener la ejecución
@@ -81,7 +88,6 @@ func main() {
 			return
 		}
 		log.Printf("Servidor goChatHeader en %s", goChatHeader)
-		// Si el encabezado está presente, continuar con la solicitud
 		c.Next()
 	})
 

@@ -4,7 +4,6 @@ import (
 	"backend/models"
 	"backend/services"
 	"encoding/json"
-	"fmt"
 	"log"
 
 	"github.com/google/uuid"
@@ -23,14 +22,16 @@ type ResponseUser struct {
 	TokenSesion string       `json:"tokenSesion"`
 	Nickname    string       `json:"nickname"`
 	RoomId      string       `json:"roomId"`
+	X_GoChat    string       `json:"x_gochat"`
 	AliveUsers  []AliveUsers `json:"data,omitempty"`
 }
 
-func PostUsersHandler(msg []byte) []byte {
+func PostUsersHandler(msg []byte, urlClient string) []byte {
 	var requestData struct {
 		RoomId      string `json:"roomid"`
 		TokenSesion string `json:"tokensesion"`
 		Nickname    string `json:"nickname"`
+		X_GoChat    string `json:"x_gochat"`
 	}
 
 	// Crear un canal para pasar la respuesta
@@ -54,8 +55,9 @@ func PostUsersHandler(msg []byte) []byte {
 		if err != nil {
 			log.Printf("Error al obtener el servidor chat. : %v", err)
 			respChan <- ResponseUser{
-				Status:  "NOK",
-				Message: "Servicio chat no disponible",
+				Status:   "NOK",
+				Message:  "Servicio chat no disponible",
+				X_GoChat: urlClient,
 			}
 			return
 		}
@@ -66,8 +68,9 @@ func PostUsersHandler(msg []byte) []byte {
 		if err != nil {
 			log.Printf("Error al parsear IdSala: %v", err)
 			respChan <- ResponseUser{
-				Status:  "NOK",
-				Message: "Error al parsear IdSala cod:00",
+				Status:   "NOK",
+				Message:  "Error al parsear IdSala cod:00",
+				X_GoChat: urlClient,
 			}
 			return
 		}
@@ -77,8 +80,9 @@ func PostUsersHandler(msg []byte) []byte {
 		if err != nil {
 			log.Printf("PostUsersHandler: Error al validar el token: %v", err)
 			respChan <- ResponseUser{
-				Status:  "NOK",
-				Message: "Sesión de usuario inválida, por favor inicie sesión nuevamente.",
+				Status:   "NOK",
+				Message:  "Sesión de usuario inválida, por favor inicie sesión nuevamente.",
+				X_GoChat: urlClient,
 			}
 			return
 		}
@@ -87,8 +91,9 @@ func PostUsersHandler(msg []byte) []byte {
 		usuarios := secMod.GestionUsuarios.ObtenerUsuariosActivos()
 		if usuarios == nil {
 			respChan <- ResponseUser{
-				Status:  "NOK",
-				Message: fmt.Sprintf("Error al obtener usuarios activos"),
+				Status:   "NOK",
+				Message:  "Error al obtener usuarios activos",
+				X_GoChat: urlClient,
 			}
 
 			return
@@ -112,6 +117,7 @@ func PostUsersHandler(msg []byte) []byte {
 			Nickname:    requestData.Nickname,
 			RoomId:      requestData.RoomId,
 			AliveUsers:  aliveUsers,
+			X_GoChat:    urlClient,
 		}
 	}()
 

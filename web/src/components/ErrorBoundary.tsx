@@ -1,4 +1,5 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -21,32 +22,20 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   }
 
   static getDerivedStateFromError(error: Error): ErrorBoundaryState {
-    // Actualiza el estado para que el siguiente renderizado muestre la UI de "Error"
     return { hasError: true, error: error, errorInfo: null };
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
-    // Puedes loguear el error a un servicio de reporte de errores
+    const navigate = useNavigate(); // Usamos el navigate aquí.
     console.error('ErrorBoundary caught an error', error, errorInfo);
-    this.setState({
-      errorInfo: errorInfo
-    });
+
+    // Redirige al login con el mensaje de error
+    navigate('/login', { state: { errorMessage: error.message || 'Algo salió mal.' } });
   }
 
   render() {
     if (this.state.hasError) {
-      // Puedes renderizar cualquier interfaz personalizada de error
-      return (
-        <div>
-          <h1>Algo salió mal.</h1>
-          <details>
-            <summary>Detalles del error</summary>
-            {this.state.error && this.state.error.toString()}
-            <br />
-            {this.state.errorInfo?.componentStack}
-          </details>
-        </div>
-      );
+      return null; // No renderizamos nada aquí, ya que redirigimos al login
     }
 
     return this.props.children; 

@@ -12,8 +12,8 @@ import (
 )
 
 type GestionUsuarios struct {
-	Usuarios []*entities.Usuario // Lista de usuarios
-	onceUser sync.Once           // Para garantizar la inicialización única de la instancia
+	Usuarios []*entities.User // Lista de usuarios
+	onceUser sync.Once        // Para garantizar la inicialización única de la instancia
 }
 
 var instanciaUser *GestionUsuarios // Instancia única de GestionUsuarios
@@ -23,7 +23,7 @@ func NuevaGestionUsuarios() *GestionUsuarios {
 	// Si la instancia no ha sido creada, se crea una nueva
 	if instanciaUser == nil {
 		instanciaUser = &GestionUsuarios{
-			Usuarios: make([]*entities.Usuario, 0), // Inicializamos la lista de usuarios vacía
+			Usuarios: make([]*entities.User, 0), // Inicializamos la lista de usuarios vacía
 		}
 	}
 	// Usamos once.Do para asegurarnos que la configuración solo se realice una vez
@@ -37,7 +37,7 @@ func NuevaGestionUsuarios() *GestionUsuarios {
 	return instanciaUser
 }
 
-func (gestion *GestionUsuarios) BuscarUsuarioPorToken(token string) (entities.Usuario, error) {
+func (gestion *GestionUsuarios) BuscarUsuarioPorToken(token string) (entities.User, error) {
 	fmt.Println("Iniciando búsqueda de usuario por token:", token)
 	for _, usuario := range gestion.Usuarios {
 		if usuario.Token == token {
@@ -46,7 +46,7 @@ func (gestion *GestionUsuarios) BuscarUsuarioPorToken(token string) (entities.Us
 		}
 	}
 	fmt.Println("Usuario no encontrado para el token:", token)
-	return entities.Usuario{}, errors.New("usuario no encontrado")
+	return entities.User{}, errors.New("usuario no encontrado")
 }
 
 func (gestion *GestionUsuarios) ObtenerTokenDeUsuario(nickname string) (string, error) {
@@ -75,7 +75,7 @@ func (gestion *GestionUsuarios) VerificarUsuarioExistente(nickname string) bool 
 }
 
 // Función que registra un usuario y lo guarda en la base de datos
-func (gestion *GestionUsuarios) RegistrarUsuario(nickname string, token string, sala *entities.Sala) (*entities.Usuario, error) {
+func (gestion *GestionUsuarios) RegistrarUsuario(nickname string, token string, sala *entities.Room) (*entities.User, error) {
 	fmt.Println("Registrando nuevo usuario:", nickname)
 
 	// Crear un nuevo usuario con la sala proporcionada
@@ -108,8 +108,8 @@ func (gestion *GestionUsuarios) RegistrarUsuario(nickname string, token string, 
 // Pra otras versiones pasar el uuid de la sala y devolver lso usuarios presentes en dicha sala
 // El objeto slaa tiene el lisado de usuarios activos en la sala
 // Método ObtenerUsuariosActivos que devuelve una lista de usuarios activos
-func (g *GestionUsuarios) ObtenerUsuariosActivos() []*entities.Usuario {
-	var usuariosActivos []*entities.Usuario
+func (g *GestionUsuarios) ObtenerUsuariosActivos() []*entities.User {
+	var usuariosActivos []*entities.User
 	for _, usuario := range g.Usuarios {
 		if usuario.State == types.Activo {
 			usuariosActivos = append(usuariosActivos, usuario)

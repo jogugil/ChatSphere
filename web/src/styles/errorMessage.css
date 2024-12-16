@@ -1,11 +1,22 @@
 /* ErrorMessage.css */
+
+/* Modos oscuro y claro */
+.w-dark-mode {
+  background-color: #333;
+  color: #fff;
+}
+
+.w-light-mode {
+  background-color: #fff;
+  color: #000;
+}
+
+/* Ventana general */
 .w-message-window {
   position: fixed;
-  top:110px;
+  top: 110px;
   right: 20px;
   width: 320px;
-  background-color: #ffffff;  /* Fondo blanco */
-  color: #000; /* Texto negro */
   border: 1px solid #dcdcdc;
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
@@ -14,9 +25,22 @@
   display: flex;
   flex-direction: column;
   transform: translate(-50%, -50%);
-  z-index: 1000;
-  overflow-y: auto;  /* Permite desplazamiento si el contenido es mayor que la ventana */
+  overflow-y: auto; /* Permite desplazamiento si el contenido es mayor que la ventana */
 }
+
+/* Tema claro */
+.w-message-window.light {
+  background-color: #ffffff; /* Fondo blanco */
+  color: #000; /* Texto negro */
+}
+
+/* Tema oscuro */
+.w-message-window.dark {
+  background-color: #2c2c2c; /* Fondo oscuro */
+  color: #f5f5f5; /* Texto claro */
+}
+
+/* Cabecera de la ventana */
 .w-header {
   display: flex;
   justify-content: space-between; /* Distribuye los elementos de manera uniforme */
@@ -25,31 +49,52 @@
   left: 0;
   right: 0;
   width: auto;
-  color: #fff;
   padding: 8px 10px;
   align-items: center;
   padding-bottom: 10px;
   border-bottom: 2px solid #ccc;
   border-top-left-radius: 8px;
   border-top-right-radius: 8px;
-  background-color: #1e3a5f; /* Azul apagado */
 }
+
+/* Tema claro para la cabecera */
+.w-header.light {
+  background-color: #1e3a5f; /* Azul apagado */
+  color: #fff;
+}
+
+/* Tema oscuro para la cabecera */
+.w-header.dark {
+  background-color: #1e1e1e; /* Gris oscuro */
+  color: #f5f5f5;
+}
+
+/* Iconos */
 .w-icon {
   font-size: 24px;
   margin-right: 10px;
 }
 
+.w-icon.error {
+  color: red;
+}
+
+.w-icon.info {
+  color: blue;
+}
+
+/* Título */
 .w-title {
   font-weight: bold;
   font-size: 18px;
   flex-grow: 1;
 }
 
+/* Controles de la cabecera */
 .w-controls {
   display: flex; /* Alinea los botones horizontalmente */
- /* gap: 8px; Añade un espacio entre los botones */
   justify-content: flex-end; /* Alineamos los botones a la derecha */
-  align-items: center;  /* Centra verticalmente los botones */
+  align-items: center; /* Centra verticalmente los botones */
 }
 
 .w-controls button {
@@ -66,6 +111,7 @@
   color: #a3c4f3;
 }
 
+/* Contenido */
 .w-content {
   margin-top: 10px;
   display: flex;
@@ -73,13 +119,12 @@
   align-items: flex-start;
   justify-content: center;
   flex-grow: 1;
-  overflow-y: auto;  /* Permite el desplazamiento dentro del contenido */
+  overflow-y: auto; /* Permite el desplazamiento dentro del contenido */
 }
 
+/* Botón OK */
 .w-ok-button {
   padding: 10px 15px; /* Estilo correcto del botón */
-  background-color: #1e3a5f; /* Color del fondo */
-  color: white;
   border: none;
   cursor: pointer;
   border-radius: 5px;
@@ -89,24 +134,43 @@
   font-size: 16px;
 }
 
+/* Tema claro para el botón OK */
+.w-ok-button.light {
+  background-color: #1e3a5f; /* Azul apagado */
+  color: white;
+}
+
+/* Tema oscuro para el botón OK */
+.w-ok-button.dark {
+  background-color: #4a4a4a; /* Botón oscuro */
+  color: #f5f5f5;
+}
+
 .w-ok-button:hover {
   background-color: #1e311f; /* Efecto hover */
 }
 
+/* Estilos específicos para los tipos de mensaje */
 .w-message-window.error {
   border-color: red;
-  background-color: #ffe6e6;
+}
+
+.w-message-window.error.light {
+  background-color: #ffe6e6; /* Fondo de error en tema claro */
+}
+
+.w-message-window.error.dark {
+  background-color: #3f1e1e; /* Fondo de error en tema oscuro */
 }
 
 .w-message-window.info {
   border-color: blue;
-  background-color: #e6f7ff;
 }
 
-.w-message-window .w-icon.error {
-  color: red;
+.w-message-window.info.light {
+  background-color: #e6f7ff; /* Fondo de info en tema claro */
 }
 
-.w-message-window .w-icon.info {
-  color: blue;
+.w-message-window.info.dark {
+  background-color: #1e3f4f; /* Fondo de info en tema oscuro */
 }

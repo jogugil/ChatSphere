@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { login } from '../api/api';
 import { useAuth } from './AuthContext';
 import { LoginResponse } from '../types/typesComm';
@@ -13,6 +13,15 @@ const Login: React.FC = () => {
 
   const navigate = useNavigate();
   const { setNickName: setAuthNickname, setToken, setRoomId, setRoomName } = useAuth();
+  const location = useLocation();
+
+  // Obtener el mensaje de error desde el estado de la navegación
+  useEffect(() => {
+    if (location.state?.errorMessage) {
+      setErrorMessage(location.state.errorMessage);
+      setShowError(true);
+    }
+  }, [location]);
 
   const handleLogin = async () => {
     console.log("Intentando iniciar sesión...");
@@ -83,7 +92,6 @@ const Login: React.FC = () => {
             <div className="header">
               <span className="title">Error</span>
               <div className="controls">
-                {/* Aquí se muestra solo el botón de maximizar cuando está minimizado */}
                 {minimized ? (
                   <button onClick={restoreErrorMessage} title="Maximizar">
                     ⬜
@@ -101,7 +109,6 @@ const Login: React.FC = () => {
             {!minimized && (
               <div className="content">
                 <p>{errorMessage}</p>
-                {/* Botón Ok para cerrar la ventana */}
                 <button className="ok-button" onClick={closeErrorMessage}>Ok</button>
               </div>
             )}
@@ -113,6 +120,3 @@ const Login: React.FC = () => {
 };
 
 export default Login;
-
-
-

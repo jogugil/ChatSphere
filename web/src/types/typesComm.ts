@@ -9,6 +9,7 @@ export interface MessageResponse {
     nickname: string;
     roomId: string;
     ListMessage: MessageList[];
+    x_gochat: string;
 }
 
 export interface MessageList {

@@ -10,7 +10,7 @@ import (
 )
 
 // Alias del tipo Usuario
-type LocalUsuario entities.Usuario
+type LocalUsuario entities.User
 
 // Implementación de los métodos de la interfaz UsuarioChat
 func (u *LocalUsuario) IniciarSesion() bool {
@@ -28,8 +28,8 @@ func (u *LocalUsuario) ActualizarEstado() {
 	u.State = types.Activo
 }
 
-func (u *LocalUsuario) UnirseASala(room *entities.Sala) {
-	u.RoomId = room.ID
+func (u *LocalUsuario) UnirseASala(room *entities.Room) {
+	u.RoomId = room.RoomId
 }
 
 func (u *LocalUsuario) SalirDeSala() {
@@ -40,15 +40,15 @@ func (u *LocalUsuario) SalirDeSala() {
 	u.RoomId = roomId // Ahora se elimina la referencia a la sala
 }
 
-func NewUsuarioGo(nickname string, room *entities.Sala) *entities.Usuario {
-	return &entities.Usuario{
+func NewUsuarioGo(nickname string, room *entities.Room) *entities.User {
+	return &entities.User{
 		UserId:         "usr-" + uuid.New().String(),
 		Nickname:       nickname,
 		Token:          CrearTokenSesion(nickname),
 		Type:           "usuariochat",
 		LastActionTime: time.Now(),
 		State:          types.Activo,
-		RoomId:         room.ID,
-		RoomName:       room.Name,
+		RoomId:         room.RoomId,
+		RoomName:       room.RoomName,
 	}
 }

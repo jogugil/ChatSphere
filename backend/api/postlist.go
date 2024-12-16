@@ -13,17 +13,18 @@ import (
 
 // Estructura para recibir los datos de la solicitud
 type RequestData struct {
-	Operacion       string `json:"operacion"`
-	IdUltimoMensaje string `json:"idUltimoMensaje"`
-	TokenSesion     string `json:"tokenSesion"`
-	Nickname        string `json:"nickName"`
-	IdSala          string `json:"idSala"`
+	Operation     string `json:"operation"`
+	LastMessageId string `json:"lastmessageid"`
+	TokenSesion   string `json:"tokenSesion"`
+	Nickname      string `json:"nickName"`
+	RoomId        string `json:"roomid"`
+	X_GoChat      string `json:"x_gochat"`
 }
 
 type MessageResponse struct {
-	IdMensaje uuid.UUID `json:"idMensaje"`
-	Nickname  string    `json:"nickname"`
-	Texto     string    `json:"texto"`
+	MessageId   uuid.UUID `json:"messageid"`
+	Nickname    string    `json:"nickname"`
+	MessageText string    `json:"messagetext"`
 }
 
 // Estructura para la respuesta
@@ -32,19 +33,20 @@ type Response struct {
 	Message     string            `json:"message"`
 	TokenSesion string            `json:"tokenSesion"`
 	Nickname    string            `json:"nickname"`
-	IdSala      string            `json:"idSala"`
+	RoomId      string            `json:"roomid"`
+	X_GoChat    string            `json:"x_gochat"`
 	ListMessage []MessageResponse `json:"data,omitempty"` // Lista de mensajes si existen
 }
 
 // Convertir los mensajes a la estructura de respuesta
-func ConvertirMensajes(mensajes []entities.Mensaje) []MessageResponse {
+func ConvertirMensajes(mensajes []entities.Message) []MessageResponse {
 	log.Println("ConvertirMensajes: Iniciando conversión de mensajes.")
 	var respuesta []MessageResponse
 	for _, mensaje := range mensajes {
 		respuesta = append(respuesta, MessageResponse{
-			IdMensaje: mensaje.IDM,
-			Nickname:  mensaje.Nickname,
-			Texto:     mensaje.Mensaje,
+			MessageId:   mensaje.MessageId,
+			Nickname:    mensaje.Nickname,
+			MessageText: mensaje.MessageText,
 		})
 	}
 	log.Printf("ConvertirMensajes: Se han convertido %d mensajes.\n", len(respuesta))
@@ -52,7 +54,7 @@ func ConvertirMensajes(mensajes []entities.Mensaje) []MessageResponse {
 }
 
 // Manejador para la ruta POST /messagelist
-func PostListHandler(msg []byte) []byte {
+func PostListHandler(msg []byte, urlClient string) []byte {
 	log.Println("PostListHandler: Iniciando el manejo de la solicitud POST para la lista de mensajes.")
 
 	// Decodificar el cuerpo de la solicitud
@@ -118,7 +120,7 @@ func PostListHandler(msg []byte) []byte {
 		}
 
 		log.Println("PostListHandler: Validando ID de sala.")
-		idSalaUUID, err := uuid.Parse(requestData.IdSala)
+		idSalaUUID, err := uuid.Parse(requestData.RoomId)
 		if err != nil {
 			log.Printf("PostListHandler: Error al validar el IdSala: %v", err)
 			respChan <- Response{
@@ -129,7 +131,7 @@ func PostListHandler(msg []byte) []byte {
 		}
 
 		log.Println("PostListHandler: Llamando al servicio para obtener mensajes desde el IdUltimoMensaje.")
-		idmensaje, err := uuid.Parse(requestData.IdUltimoMensaje)
+		idmensaje, err := uuid.Parse(requestData.LastMessageId)
 		if err != nil {
 			log.Printf("PostListHandler: Error al validar el idmensaje: %v", err)
 			respChan <- Response{
@@ -170,7 +172,8 @@ func PostListHandler(msg []byte) []byte {
 			Message:     "Mensajes obtenidos correctamente.",
 			TokenSesion: requestData.TokenSesion,
 			Nickname:    requestData.Nickname,
-			IdSala:      requestData.IdSala,
+			RoomId:      requestData.RoomId,
+			X_GoChat:    urlClient,
 			ListMessage: mensajesResponse,
 		}
 	}()

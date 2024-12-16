@@ -12,12 +12,12 @@ type MetricaSala struct {
 	UltimaActualizacion time.Time `json:"ultimaActualizacion"`
 }
 
-func (metrica *MetricaSala) ActualizarMetricasUsuario(usuario entities.Usuario) {
+func (metrica *MetricaSala) ActualizarMetricasUsuario(usuario entities.User) {
 	// Incrementar el número de usuarios activos
 	metrica.UsuariosPorHora++
 }
 
-func (metrica *MetricaSala) ActualizarMetricasMensaje(mensaje entities.Mensaje) {
+func (metrica *MetricaSala) ActualizarMetricasMensaje(mensaje entities.Message) {
 	// Incrementar el número de mensajes enviados
 	metrica.MensajesPorHora++
 	metrica.MensajesEnviados++

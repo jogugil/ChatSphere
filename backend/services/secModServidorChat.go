@@ -71,7 +71,7 @@ func (secMod *SecModServidorChat) CrearTokenSesion(nickname string) string {
 }
 
 // EjecutarLogin maneja el proceso de login
-func (secMod *SecModServidorChat) EjecutarLogin(nickname string) (*entities.Usuario, error) {
+func (secMod *SecModServidorChat) EjecutarLogin(nickname string) (*entities.User, error) {
 	fmt.Printf("EjecutarLogin:Ejecutando login para el usuario: %s\n", nickname)
 
 	// Llamar a RegistrarUsuario para asegurarnos de que el usuario esté registrado
@@ -92,13 +92,13 @@ func (secMod *SecModServidorChat) EjecutarLogin(nickname string) (*entities.Usua
 		return nil, fmt.Errorf("EjecutarLogin: CODL02: error al registrar el usuario %v", err)
 	}
 
-	secMod.GestionSalas.SalaPrincipal.Usuarios = append(secMod.GestionSalas.SalaPrincipal.Usuarios, *newUser)
-	newUser.RoomId = secMod.GestionSalas.SalaPrincipal.ID
-	newUser.RoomName = secMod.GestionSalas.SalaPrincipal.Name
+	secMod.GestionSalas.SalaPrincipal.Users = append(secMod.GestionSalas.SalaPrincipal.Users, *newUser)
+	newUser.RoomId = secMod.GestionSalas.SalaPrincipal.RoomId
+	newUser.RoomName = secMod.GestionSalas.SalaPrincipal.RoomName
 
 	// Mostrar el mensaje de éxito
 	fmt.Printf("EjecutarLogin: Usuario %s logueado con el token %s\n", nickname, token)
-	fmt.Printf("EjecutarLogin: Sala principal: %s (ID: %v)\n", secMod.GestionSalas.SalaPrincipal.Name, secMod.GestionSalas.SalaPrincipal.ID)
+	fmt.Printf("EjecutarLogin: Sala principal: %s (ID: %v)\n", secMod.GestionSalas.SalaPrincipal.RoomName, secMod.GestionSalas.SalaPrincipal.RoomId)
 
 	// Devolver el usuario con los detalles de la sala
 	return newUser, nil
@@ -167,7 +167,7 @@ func (secMod *SecModServidorChat) EjecutarVerSala(nickname string, idSala uuid.U
 	// Mostrar los mensajes
 	fmt.Println("EjecutarVerSala: Mensajes en la sala:")
 	for _, msg := range mensajes {
-		fmt.Printf("[%s]: %s\n", msg.Nickname, msg.Mensaje)
+		fmt.Printf("[%s]: %s\n", msg.Nickname, msg.MessageText)
 	}
 
 	return nil
