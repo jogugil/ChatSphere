@@ -21,11 +21,12 @@ const Login: React.FC = () => {
       setErrorMessage(location.state.errorMessage);
       setShowError(true);
     }
-  }, [location]);
+  }, [location])
 
   const handleLogin = async () => {
     console.log("Intentando iniciar sesión...");
-
+    setShowError(false); // Ocultar el error al intentar de nuevo
+    setNickname(''); // Limpiar el nickname al intentar iniciar sesión nuevamente
     try {
       const response: LoginResponse = await login(nicknamelogin);
       console.log("Login --> response :",response);

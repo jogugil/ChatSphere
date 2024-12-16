@@ -23,6 +23,9 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
+// OJO!! TEnemos que arrancar el servidor de mongodb antes, sino no funcionará
+//  sudo docker run --name mongodb -d -p 27017:27017 mongo:latest
+
 func main() {
 	log.SetFlags(log.Lshortfile)
 	utils.CargarVariablesDeEntorno()
@@ -34,7 +37,7 @@ func main() {
 		uriMongo = "mongodb://localhost:27017" // Valor por defecto si no se configura
 	}
 
-	nameMongo, err := utils.ObtenerVariableDeEntorno("SizeQueue")
+	nameMongo, err := utils.ObtenerVariableDeEntorno("NameMongo")
 	if err != nil {
 		log.Fatalf("Error al iniciar el servidor. Nombre del servidor no configurado: %v", err)
 		nameMongo = "MongoChat" // Valor por defecto si no se configura

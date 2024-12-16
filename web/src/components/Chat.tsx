@@ -63,22 +63,27 @@ const Chat = () => {
   const apiIP          = import.meta.env.VITE_IP_SERVER_GOCHAT;
   const apiPORT        = import.meta.env.VITE_PORT_SERVER_GOCHAT;
   const socketUrl      = `ws://${apiIP}:${apiPORT}/ws`;
-  const socketMessages = useState<WebSocketManager | null>(null); 
-  const socketUsers    = useState<WebSocketManager | null>(null); 
+  // Referencias para las instancias de WebSocketManager
+  const messageSocketRef = useRef<WebSocketManager | null>(null);
+  const userSocketRef    = useRef<WebSocketManager | null>(null);
+  const [isUserSocketConnected, setIsUserSocketConnected] = useState(false);
+  const [isMessageSocketConnected, setIsMessageSocketConnected] = useState(false);
 
   const [isMessageSendable, setIsMessageSendable] = useState(false); // Para habilitar/deshabilitar input y botón
   const [messages, setMessages]         = useState<Message[]> ([]);        // Estado para los mensajes
   const [messageText, setMessageText]   = useState<string> ('');           // Estado para el texto del mensaje
   const [aliveUsers, setAliveUsers]     = useState<string[]> ([]);         // Estado para los usuarios activos
  
-  
  
+   
   //Ventana de error /información
   const [minimized, setMinimized]       = useState (false);
   const closeErrorMessage = () => {
     setShowError(false);
     setIsMessageSendable(true); //  habilitar el envío de mensajes
   };  
+ 
+
   const minimizeErrorMessage = () => {
     setMinimized(true);
   }; 
@@ -100,10 +105,12 @@ const Chat = () => {
   const { token, nickName, roomId, roomName } = useAuth();  // Obtener el usuario y el token del contexto
   const [userChat, setUserChat]               = useState<User | null>(null);  // Estado para el objeto User
   const [room, setRoom]                       = useState<Room | null>(null);  // Estado para el objeto Room
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [initialized, setInitialized]         = useState<boolean>(false);
   const [showError, setShowError]             = useState(false);
   const [errorMessage, setErrorMessage]       = useState('');
   const [isErrorActive, setIsErrorActive]     = useState(false);
-  const [initialized, setInitialized]         = useState(false);
+  
  
   // Timeout definido en el archivo de entorno (.env). Cada cuanto tiempo el polling realia la petición de mensajes/usuarios
   const timeout = parseInt(import.meta.env.VITE_TIMEOUT, 10000) || 50000;
@@ -208,8 +215,8 @@ const loadAliveUsers = async (userObject: User ) => {
     try {
       const datosCliente = await getClientInformation();
       console.log('Usuarios activos:datosCliente:', datosCliente);
-      if ( socketUsers &&  socketUsers.isConnected) {
-        const response = await getAliveUsers ( socketUsers, userObject.nickname, userObject.token, userObject.roomId, datosCliente );
+      if ( userSocketRef  &&  userSocketRef.current?.isConnected) {
+        const response = await getAliveUsers ( userSocketRef.current   , userObject.nickname, userObject.token, userObject.roomId, datosCliente );
       
         // Parsear la respuesta JSON
         const data: ResponseUser = JSON.parse(response);  // Asegúrate de que la respuesta es un JSON
@@ -248,9 +255,19 @@ const loadAliveUsers = async (userObject: User ) => {
         // Hacer la   llamada a la API para obtener los mensajes
         const datosCliente = await getClientInformation();
         console.log('loadMessages:datosCliente:', datosCliente);
-        if (socketMessages && socketMessages.isConnected) {
-          const messageList  = await getMessages(socketMessages, userObject.NickName, userObject.token, userObject.idRoom, room.roomName, messageID, datosCliente);
-          console.log ("loadMessages:",messageList);
+        if (messageSocketRef.current && messageSocketRef.current.isConnected) {
+          console.log('loadMessages: datosCliente:', datosCliente);
+          
+          // Obtener los mensajes pasando el WebSocketManager real
+          const messageList = await getMessages(
+            messageSocketRef.current,  // Accede a la instancia de WebSocketManager
+            userObject.NickName,
+            userObject.token,
+            userObject.idRoom,
+            room.roomName,
+            messageID,
+            datosCliente
+          );
           // Convertir los mensajes a objetos
           room.updateMessages(messageList);
   
@@ -280,28 +297,40 @@ const loadAliveUsers = async (userObject: User ) => {
     localStorage.removeItem("Room");
     localStorage.removeItem("User");
     localStorage.removeItem("Messages");
-  
+    setIsAuthenticated(false);
     // Redirigir al login
     window.location.href = "/"; // Redirige a la página de login
   };
  
 
-  const authenticateUser = () => {
-    if (nickName && roomId && roomName && token) {
-      const user = new User(nickName, 'Alive', roomId, roomName, token);
-      setUserChat(user);
-      setIsMessageSendable(true); //  habilitar el envío de mensajes
-      console.log('Usuario autenticado:', user);
-    } else {
-      showErrorModal('Datos del usuario no válidos');
- 
-      navigate('/');
+  const authenticateUser = async ()=> {
+    try {
+      if (nickName && roomId && roomName && token) {
+        const user = new User(nickName, 'Alive', roomId, roomName, token);
+        setUserChat(user);
+        setIsMessageSendable(true);
+        setIsAuthenticated(true);
+        console.log('Usuario autenticado:', user);
+      } else {
+        throw new Error('Datos del usuario no válidos');
+      }
+    } catch (error) {
+      setIsAuthenticated(false);
+      console.error(error);
+      throw error;
     }
   };
   
-  const initializeRoom = (user: User | null) => {
-    if (user) {
-      const roomU = new Room(user.roomId, user.roomName);
+  const initializeRoom = async ()  => {
+    console.log(
+      "Se llama a initializeRoom. Valores actuales:\n" +
+      `userChat: ${JSON.stringify(userChat)},\n` + 
+      `messageSocket.isConnected: ${messageSocketRef.current?.isConnected},\n` +
+      `userSocket.isConnected: ${userSocketRef.current?.isConnected},\n` +
+      `initialized: ${initialized}`
+    );
+    if (userChat && messageSocketRef.current?.isConnected && userSocketRef.current?.isConnected) {
+      const roomU = new Room(userChat.roomId, userChat.roomName);
       setRoom(roomU);
       console.log('Sala creada:', roomU);
     }  
@@ -309,70 +338,79 @@ const loadAliveUsers = async (userObject: User ) => {
   
   // UseEffect para crear userChat
   useEffect(() => {
-    if (nickName && token && roomId && roomName) {
-      authenticateUser (); // Establecer userChat cuando todos los valores estén disponibles
+    if (nickName && roomId && roomName && token && !isAuthenticated) {
+      authenticateUser();
     }
-  }, [token, nickName, roomId, roomName]); // Depende de los valores del contexto
+  }, [nickName, roomId, roomName, token, isAuthenticated]);
 
   useEffect(() => {
-    async function authenticateAndInitialize() {
-      await authenticateUser(); // Autenticación del usuario
-      console.log ("   Se llama a authenticateUser")
-      if (userChat && socketMessages?.isConnected && socketUsers?.isConnected) {
-        console.log (" Los objetos userChat creados. Se llama a initializeRoom")
-
-        // Solo se procede con la inicialización si el usuario está autenticado y el WebSocket está conectado
-        initializeRoom(userChat); // Se crea la sala
-      }
-    }
-    
-    authenticateAndInitialize();
-  }, [userChat]); // Depende solo de userChat para ejecutarse
-
-  // UseEffect para crear la sala, solo cuando userChat está listo y no se ha inicializado antes
-  useEffect(() => {      
-      initializeRoom (userChat);
-  }, [userChat, initialized]); // Este efecto depende de userChat y de initialized
+    initializeRoom();
+  }, [initialized]); // Este useEffect depende de initialized
 
   useEffect(() => {
-    // Intentar conectar al WebSocket de forma asíncrona
     const connectWebSocket = async () => {
       try {
-        let socketMessages = new WebSocketManager(socketUrl, "messagesSocket");
-        let sockeUsers     = new WebSocketManager(socketUrl, "usersSocket");
-      }catch (error: unknown) {
+        // Instancia WebSocketManager con un callback para manejar el error
+        messageSocketRef.current = new WebSocketManager(socketUrl, 'messagesSocket', (error: string) => {
+          setConnectionError(error);  // Guardamos el error de conexión en el estado
+        });
+        userSocketRef.current = new WebSocketManager(socketUrl, 'usersSocket', (error: string) => {
+          setConnectionError(error);
+        });
+
+        // Pasar el callback de onOpen desde React
+        userSocketRef.current.setOnOpenCallback(() => {
+          console.log('User socket connected');
+          setIsUserSocketConnected(true); // Marca como conectado
+        });
+
+        messageSocketRef.current.setOnOpenCallback(() => {
+          console.log('Message socket connected');
+          setIsMessageSocketConnected(true); // Marca como conectado
+        });
+
+      } catch (error: unknown) {
         if (error instanceof Error) {
-          setConnectionError(error.message); // Ahora accedemos a error.message de forma segura
-          console.error('Error al conectar al WebSocket:', error);
+          setConnectionError(error.message);
         } else {
-          // En caso de que error no sea una instancia de Error
           setConnectionError('Error desconocido al conectar al WebSocket');
-          console.error('Error desconocido al conectar al WebSocket', error);
         }
       }
     };
-
+  
     connectWebSocket();
-
+  
     return () => {
-      if (wsManagerRef.current && typeof wsManagerRef.current.close === 'function') {
-        wsManagerRef.current.close();
+      if (userSocketRef.current && typeof userSocketRef.current.close === 'function') {
+        userSocketRef.current.close();
+      }
+      if (messageSocketRef.current && typeof messageSocketRef.current.close === 'function') {
+        messageSocketRef.current.close();
       }
     };
-  }, [room]);
+  }, [socketUrl])
 
   // Este useEffect comienza los updates periódicos una vez que userChat, room y WebSocket estén listos
   useEffect(() => {
     // Solo ejecutar startPeriodicUpdates cuando userChat, room, y el WebSocket estén listos
-    if (userChat && room && wsManagerRef.current?.isConnected && !initialized) {
+    if (userChat && userSocketRef.current?.isConnected && messageSocketRef.current?.isConnected && !initialized) {
       console.log("Se llaman los updates periódicos del chat");
-      //startPeriodicUpdates(userChat); // Activa los mensajes periódicos
-      setInitialized(true); // Marca como inicializado para evitar ejecuciones futuras
+      startPeriodicUpdates(userChat); // Activa los mensajes periódicos
+      setInitialized(true);  // Marca como inicializado para evitar ejecuciones futuras      
+    }  else {
+      console.log("Esperando crear userChat y la conexión de WebSocket...");
     }
-  }, [userChat, room, wsManagerRef.current?.isConnected, initialized]); // Se ejecuta cuando cambian userChat, room o WebSocket
-
+  }, [userChat, userSocketRef.current?.isConnected, messageSocketRef.current?.isConnected])
+   // Se ejecuta cuando cambian userChat, room o WebSocket
+  useEffect(() => {
+    if (connectionError) {
+      setShowError(true);  // Mostrar el error
+    }
+  }, [connectionError]);
+  
+   
   // Asegúrate de que tanto el usuario como el WebSocket y la sala estén listos antes de mostrar el chat
-  if (!userChat || !wsManagerRef.current?.isConnected || !room) {
+  if (!userChat || !userSocketRef.current?.isConnected || !messageSocketRef.current?.isConnected || !room) {
     return <div>Cargando...</div>; // O cualquier otro indicador de que el chat no está listo
   }
   else{

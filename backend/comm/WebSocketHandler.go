@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -41,7 +42,15 @@ func WebSocketHandler(c *gin.Context) {
 
 			break
 		}
-
+		trimmedMsg := strings.TrimSpace(string(msg))
+		if len(trimmedMsg) == 0 {
+			log.Println("Mensaje vacío o solo con espacios recibido, ignorando.")
+			continue
+		}
+		if len(msg) == 0 {
+			log.Println("Mensaje vacío recibido, ignorando.")
+			continue
+		}
 		var data map[string]string
 		err = json.Unmarshal(msg, &data)
 		if err != nil {
