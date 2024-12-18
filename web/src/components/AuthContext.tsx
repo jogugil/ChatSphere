@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, ReactNode, useMemo } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useMemo, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';  // Usar useNavigate en lugar de useHistory
 
 interface AuthContextType {
   token: string;
@@ -9,6 +10,8 @@ interface AuthContextType {
   setNickName: (nickName: string) => void;
   setRoomId: (roomId: string) => void;
   setRoomName: (roomName: string) => void;
+  error: string | null;
+  setError: (error: string | null) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -18,21 +21,49 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [nickName, setNickName] = useState('');
   const [roomId, setRoomId] = useState('');
   const [roomName, setRoomName] = useState('');
+  const [error, setError] = useState<string | null>(null);  // Estado para manejar errores
+  const navigate = useNavigate();
+
+// Añadir console.log para inspeccionar los valores del estado
+useEffect(() => {
+  const storedToken = localStorage.getItem('token');
+  if (storedToken) {
+    setToken(storedToken);
+    setNickName(localStorage.getItem('nickName') || '');
+    setRoomId(localStorage.getItem('roomId') || '');
+    setRoomName(localStorage.getItem('roomName') || '');
+  }
+}, []);
+useEffect(() => {
+  console.log('Estado de error en AuthContext:', error);
+}, [error]);
+useEffect(() => {
+  console.log("Redirigiendo por error", error);
+  if (error) {
+    // Si hay un error, redirigir al login con el mensaje de error.
+    console.log("Redirigiendo por error", error);
+    navigate(`/?errorMessage=${encodeURIComponent(error)}`);
+  }  
+}, [token, error, navigate]);
+
+ 
 
   // Memorizamos el valor del contexto para evitar re-renderizados innecesarios
   const value = useMemo(() => ({
-    token, 
-    nickName, 
-    roomId, 
-    roomName, 
-    setToken, 
-    setNickName, 
-    setRoomId, 
-    setRoomName
-  }), [token, nickName, roomId, roomName]); // Dependencias para re-memorizar solo cuando cambia el estado
+    token,
+    nickName,
+    roomId,
+    roomName,
+    setToken,
+    setNickName,
+    setRoomId,
+    setRoomName,
+    error,
+    setError,  // Incluir la función setError
+  }), [token, nickName, roomId, roomName, error]);
 
   // Agregar console.log aquí para ver los valores en la consola
-  console.log('AuthContext State:', { token, nickName, roomId, roomName });
+  console.log('AuthContext State:', { token, nickName, roomId, roomName, error });
 
   return (
     <AuthContext.Provider value={value}>

@@ -42,6 +42,20 @@ const Clock = () => {
 };
 
 const Chat = () => {
+
+  /*
+type ResponseUser struct {
+	Status      string `json:"status"`
+	Message     string `json:"message"`
+	TokenSesion string `json:"tokenSesion"`
+	Nickname    string `json:"nickname"`
+	RoomId      string `json:"roomId"`
+	AliveUsers  []struct {
+		Nickname       string `json:"nickname"`
+		LastActionTime string `json:"lastactiontime"`
+	} `json:"data,omitempty"`
+}
+*/
   // Estructuras que define los usuarios  activos que vienen del Servidor Gochat
   interface  aliveUsers {
     Nickname: string;
@@ -77,22 +91,23 @@ const Chat = () => {
  
    
   //Ventana de error /información
+  const [errorQueue, setErrorQueue] = useState<string[]>([]);
   const [minimized, setMinimized]       = useState (false);
   const closeErrorMessage = () => {
-    setShowError(false);
-    setIsMessageSendable(true); //  habilitar el envío de mensajes
+    setErrorQueue((prevQueue) => prevQueue.slice(1)); // Eliminar el mensaje actual
+    if (errorQueue.length <= 1) {
+        setShowError(false); // Cerrar si no hay más errores
+    }
   };  
- 
-
   const minimizeErrorMessage = () => {
     setMinimized(true);
   }; 
   const restoreErrorMessage  = () => setMinimized (false);  // Función para restaurar el mensaje de error
   // Función para mostrar el error
   const showErrorModal = (message: string) => {
-    setErrorMessage(message);
+    setErrorQueue((prevQueue) => [...prevQueue, message]); // Agregar mensaje a la cola
     setShowError(true);
-    setIsMessageSendable(false); // Deshabilitar el envío de mensajes
+    setIsMessageSendable(false);
   };
 
   //Control coor fondo zona central
@@ -101,19 +116,22 @@ const Chat = () => {
     setIsDarkMode(!isDarkMode);
   };
   
+    // Timeout definido en el archivo de entorno (.env). Cada cuanto tiempo el polling realia la petición de mensajes/usuarios
+    const timeout = parseInt(import.meta.env.VITE_TIMEOUT, 10 ) || 50000;
+ 
   //Logica de usuario y chat
   const { token, nickName, roomId, roomName } = useAuth();  // Obtener el usuario y el token del contexto
   const [userChat, setUserChat]               = useState<User | null>(null);  // Estado para el objeto User
   const [room, setRoom]                       = useState<Room | null>(null);  // Estado para el objeto Room
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [initialized, setInitialized]         = useState<boolean>(false);
+  const [startPolling, setStartPolling]       = useState<boolean>(false);
   const [showError, setShowError]             = useState(false);
   const [errorMessage, setErrorMessage]       = useState('');
   const [isErrorActive, setIsErrorActive]     = useState(false);
-  
- 
-  // Timeout definido en el archivo de entorno (.env). Cada cuanto tiempo el polling realia la petición de mensajes/usuarios
-  const timeout = parseInt(import.meta.env.VITE_TIMEOUT, 10000) || 50000;
+  const intervalIdRef = useRef<number | null>(null);
+   
+
 
   // Controlo input envío de mensjaes
   // Tipo explícito para las claves válidas
@@ -177,22 +195,20 @@ const Chat = () => {
    
 };
 
-// Función para manejar la carga periódica de datos
-function startPeriodicUpdates (userChat: any) {
+// Función que realiza la actualización periódica
+const startPeriodicUpdates = ( ) => {
   // Verificar que el usuario esté disponible
   if (!userChat) {
     console.error("Usuario no disponible.");
     return;
   }
 
-  // Función para realizar ambas tareas: Petición lsitado mensajes y petición listado de usaurios
+  // Función para realizar ambas tareas: Petición listado de mensajes y listado de usuarios
   const updateData = () => {
     try {
-      // Cargar mensajes del chat
       console.log("Cargando mensajes del chat...");
       loadMessages(userChat);
 
-      // Cargar usuarios activos
       console.log("Cargando usuarios activos...");
       loadAliveUsers(userChat);
     } catch (error) {
@@ -201,14 +217,13 @@ function startPeriodicUpdates (userChat: any) {
   };
 
   // Ejecutar inmediatamente antes de iniciar el intervalo
-  updateData ();
+  updateData();
 
   // Configurar la actualización periódica
-  const intervalId = setInterval (updateData, timeout);
-
-  // Retornar el ID del intervalo para permitir detenerlo si es necesario
-  return intervalId;
-}
+  intervalIdRef.current = setTimeout(() => {
+    console.log("Timeout ejecutado");
+  }, timeout) as unknown as number;  // Forzar tipo como `number`
+};
 
 //Función que proicesa el mensaje JSON del servidor GoChat. lista de usaurios activos
 const loadAliveUsers = async (userObject: User ) => {
@@ -220,7 +235,8 @@ const loadAliveUsers = async (userObject: User ) => {
       
         // Parsear la respuesta JSON
         const data: ResponseUser = JSON.parse(response);  // Asegúrate de que la respuesta es un JSON
-        if (data.Status === 'success' && data.AliveUsers) {
+
+        if (data.Status === 'OK' && data.AliveUsers) {
           // Extraer los nicknames de los usuarios activos
           const nicknames = data.AliveUsers.map(user => user.Nickname);
           setAliveUsers(nicknames);  // Establecer el estado con los nicknames
@@ -238,12 +254,15 @@ const loadAliveUsers = async (userObject: User ) => {
       return;
     }
   };
+ 
+
   // Obtener mensajes históricos al cargar la página
   const loadMessages = async (userObject: any) => {
     // Generar un UUID vacío para el primer request
     const emptyUUID: UUID = "00000000-0000-0000-0000-000000000000";
       
     try {
+        console.log('loadMessages:room:', room);
         if (!room) {
           // Mostrar una ventana emergente de error       
           console.error('Error , no se creo el objeto room');
@@ -251,7 +270,7 @@ const loadAliveUsers = async (userObject: User ) => {
         }
         
         const messageID = (room.lastIDMessageId ? room.lastIDMessageId : emptyUUID);
-        
+        console.log('loadMessages:messageID:', messageID);
         // Hacer la   llamada a la API para obtener los mensajes
         const datosCliente = await getClientInformation();
         console.log('loadMessages:datosCliente:', datosCliente);
@@ -268,9 +287,10 @@ const loadAliveUsers = async (userObject: User ) => {
             messageID,
             datosCliente
           );
+          console.log('loadMessages:messageList:', messageList);
           // Convertir los mensajes a objetos
           room.updateMessages(messageList);
-  
+          
           // Actualizar el estado de los mensajes
           setMessages(room.messageList);
   
@@ -394,17 +414,40 @@ const loadAliveUsers = async (userObject: User ) => {
   useEffect(() => {
     // Solo ejecutar startPeriodicUpdates cuando userChat, room, y el WebSocket estén listos
     if (userChat && userSocketRef.current?.isConnected && messageSocketRef.current?.isConnected && !initialized) {
-      console.log("Se llaman los updates periódicos del chat");
-      startPeriodicUpdates(userChat); // Activa los mensajes periódicos
-      setInitialized(true);  // Marca como inicializado para evitar ejecuciones futuras      
+      console.log("Se llaman setInitialized para poder crear el objeto room");
+ 
+      if (!initialized) setInitialized(true);  // Marca como inicializado para evitar ejecuciones futuras     
+
     }  else {
-      console.log("Esperando crear userChat y la conexión de WebSocket...");
+      console.log("Esperando crear userChat y la conexión de WebSocket. No se llamo a setInitialized");
     }
   }, [userChat, userSocketRef.current?.isConnected, messageSocketRef.current?.isConnected])
-   // Se ejecuta cuando cambian userChat, room o WebSocket
+
   useEffect(() => {
+        if (userChat && userSocketRef.current?.isConnected && messageSocketRef.current?.isConnected && initialized) {
+     
+          startPeriodicUpdates( ); // Activa los mensajes periódicos
+          console.log("Esperando crear userChat y la conexión de WebSocket. No se llamo a setInitialized");
+          if (!startPolling) {
+              setStartPolling (true); 
+          }  else {
+            console.log(" No pudo llamarse a startPeriodicUpdates...");
+          }
+          console.log("Se llaman los updates periódicos del chat");
+        }
+          
+        // Limpiar el intervalo cuando el componente se desmonte
+        return () => {
+          if (intervalIdRef.current !== null) {
+            clearInterval(intervalIdRef.current);
+            intervalIdRef.current = null;  // Limpiar la referencia después de limpiar el intervalo
+          }
+        };
+    }, [room, startPolling]);
+
+   useEffect(() => {
     if (connectionError) {
-      setShowError(true);  // Mostrar el error
+            showErrorModal ("Error en la conexión con el servidor. Espere unos isntantes.");
     }
   }, [connectionError]);
   

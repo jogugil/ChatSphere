@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { UUID } from '../models/Message'; 
 import { LoginResponse } from '../types/typesComm';
-import WebSocketManager from 'comm/WebSocketManager';
+import {WebSocketManager} from '../comm/WebSocketManager';
 
  
 const apiUrl = import.meta.env.VITE_API_URL; //'http://localhost:8081';
@@ -123,7 +123,32 @@ export const sendMessage = async (nickName: string, token: string, roomId: strin
   }
 };
 
+/*
+requestData := map[string]string{
+  "operation":     "listmenssage",
+  "nickname":      nickname,
+  "roomid":        idsala,
+  "tokensesion":   token,
+  "lastmessageid": ultimoIdMensaje,
+  "x_gochat":      "http://localhost:8081",
+}
+*/
 // Obtener mensajes. Función que realiza la petición para obtener los mensajes
+// Función para manejar la respuesta del WebSocket
+// Definir la función callback para procesar la respuesta
+const handleMessage = (event: MessageEvent): any => {
+  const message = event.data;
+
+  // Procesar el mensaje recibido
+  try {
+    const parsedData = JSON.parse(message); // Intentamos parsear el mensaje como JSON
+    return parsedData;  // Devuelve el objeto procesado
+  } catch (error) {
+    console.error('Error al parsear el mensaje:', error);
+    return message;  // Si no se puede parsear, devolvemos el mensaje como string
+  }
+};
+
 export const getMessages = async (
   socketManager: WebSocketManager, 
   nickName: string, 
@@ -135,11 +160,11 @@ export const getMessages = async (
 ): Promise<string> => {
   
   const requestData = {
-    nickName: nickName,
-    idSala: roomId,
+    nickname: nickName,
+    roomid: roomId,
     roomname: roomName,
     tokensession: token,
-    idUltimoMensaje: lastSeenMessageId,
+    lastmessageid: lastSeenMessageId,
     operation: "listmenssage",
     x_gochat: x_gochat,
   };
@@ -151,7 +176,7 @@ export const getMessages = async (
     if (!ws) {
       throw new Error('WebSocket no disponible.');
     }
-
+    socketManager.setOnMessageCallback(handleMessage);
     // Promise que se resuelve cuando la conexión WebSocket se abre
     const wsPromise = new Promise<WebSocket>((resolve, reject) => {
       ws.onopen = () => resolve(ws);
@@ -163,12 +188,16 @@ export const getMessages = async (
     // Enviar los datos a través del WebSocket
     ws.send(JSON.stringify(requestData));
 
-    // Esperar y procesar la respuesta
-    return new Promise<string>((resolve, reject) => {
+ 
+    // Esperar a que se reciba el mensaje y se procese con handleMessage
+    return new Promise<any>((resolve, reject) => {
       ws.onmessage = (event) => {
-        const response = event.data;
-        console.log('Respuesta completa:', response);
-        resolve(response);
+        try {
+          const result = handleMessage(event);  // Usamos el callback `handleMessage`
+          resolve(result);  // Devolvemos el resultado procesado
+        } catch (error) {
+          reject(error);
+        }
       };
 
       // Manejar errores durante la conexión WebSocket
@@ -182,14 +211,23 @@ export const getMessages = async (
     throw error;
   }
 };
+
+
  
 
   /*
-  	var requestData struct {
+	requestData := struct {
 		RoomId      string `json:"roomid"`
 		TokenSesion string `json:"tokensesion"`
 		Nickname    string `json:"nickname"`
+		Operation   string `json:"operation"`
 		X_GoChat    string `json:"x_gochat"`
+	}{
+		RoomId:      idsala,
+		TokenSesion: token,
+		Nickname:    nickname,
+		Operation:   "listusers",
+		X_GoChat:    "http://localhost:8081",
 	}
   */
 export const getAliveUsers = async (
@@ -204,6 +242,7 @@ export const getAliveUsers = async (
     roomid: roomId,
     tokensesion: token,
     nickname: nickname,
+    operation: "listusers",
     x_gochat: x_gochat
   };
 

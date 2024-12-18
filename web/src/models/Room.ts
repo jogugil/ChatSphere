@@ -119,13 +119,13 @@ export class Room implements RoomChat {
           console.log("Error al parsear el JSON:", error);
           return;
       }
-
+      console.log(" ** updateMessages:",response  );
       // Verificamos si el roomId coincide
       if (response.roomId !== this.roomId) {
           console.log("El roomId no coincide.");
           return;
       }
-
+      console.log(response.ListMessage);
       // Si hay mensajes, actualizamos la lista de mensajes y el último id de mensaje
       if (response.ListMessage.length > 0) {
           // Añadimos todos los mensajes a la lista de mensajes

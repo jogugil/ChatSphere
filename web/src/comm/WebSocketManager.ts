@@ -6,10 +6,14 @@ export class WebSocketManager {
   private messageQueue: string[] = [];
   private _isConnected: boolean = false;
   private retryCount: number = 0;
-  private maxRetries: number;
+  private maxRetries: number = 5; // Número máximo de reintentos
+  private retryDelay: number = 2000; // Retraso entre reintentos en ms
+  private retries: number = 0;
+  
   private socketId: string;
   private onErrorCallback: ((error: string) => void) | null = null;
- 
+  private onMessageCallback?: (event: MessageEvent) => any; //Función para procesar lso mensajes que llegan como contestacion a las peticiones.
+
    // Agregar una propiedad para el callback
    onOpenCallback?: () => void;
 
@@ -25,6 +29,7 @@ export class WebSocketManager {
 
   private connect() {
     console.log(`Conectando a WebSocket para ${this.socketId}...`);
+    console.log(`Conectando a WebSocket con la url ${this.url}...`);
     this.socket = new WebSocket(this.url);
 
     this.socket.onopen = () => {
@@ -42,9 +47,12 @@ export class WebSocketManager {
         this.onOpenCallback();
       }
     };
-
+ 
     this.socket.onmessage = (event) => {
       console.log(`Mensaje recibido para ${this.socketId}:`, event.data);
+      if (this.onMessageCallback) {
+        this.onMessageCallback(event);
+      }
     };
 
     this.socket.onclose = () => {
@@ -61,12 +69,25 @@ export class WebSocketManager {
       }
     };
 
+ 
+
     this.socket.onerror = (error) => {
       console.error(`Error en WebSocket para ${this.socketId}:`, error);
-      this.onErrorCallback && this.onErrorCallback("Error en WebSocket: " + (error instanceof Error ? error.message : "Error desconocido"));
+    
+      const errorMessage = `Error en WebSocket (${this.socketId}): ` + 
+        (error instanceof ErrorEvent ? error.message : "Error desconocido");
+    
+      const isReconnectError = this.handleReconnect(error); // Devuelve si es un error de reconexión
+    
+      if (!isReconnectError) {
+        // Si no es un error relacionado con reconexión, llama al callback
+        this.onErrorCallback?.(errorMessage);
+      }
     };
   }
-
+  public setOnMessageCallback(callback: (event: MessageEvent) => any) {
+    this.onMessageCallback = callback;
+  }
   public sendMessage(message: string) {
     if (this.isConnected) {
       this.socket?.send(message);
@@ -97,4 +118,19 @@ export class WebSocketManager {
   setOnOpenCallback(callback: () => void) {
     this.onOpenCallback = callback;
   }
+
+  private handleReconnect(error?: Event): boolean {
+    if (this.retries < this.maxRetries) {
+      this.retries++;
+      console.log(`Intentando reconectar (${this.socketId})... (${this.retries}/${this.maxRetries})`);
+      setTimeout(() => this.connect(), this.retryDelay);
+      return true; // Es un error de reconexión
+    } else {
+      const errorMsg = `No se pudo reconectar (${this.socketId}) después de ${this.maxRetries} intentos.`;
+      console.error(errorMsg);
+      this.onErrorCallback?.(errorMsg); // Callback al agotar los intentos
+      return false; // No es un error de reconexión, ya se agotaron los intentos
+    }
+  }
+
 }

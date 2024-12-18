@@ -1,45 +1,47 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { Component, ErrorInfo } from 'react';
+import { Navigate } from 'react-router-dom';
 
-interface ErrorBoundaryProps {
-  children: ReactNode;
-}
+type Props = {
+  children: React.ReactNode;
+};
 
-interface ErrorBoundaryState {
+type State = {
   hasError: boolean;
-  error: Error | null;
-  errorInfo: ErrorInfo | null;
-}
+  errorMessage: string;
+};
 
-class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  constructor(props: ErrorBoundaryProps) {
+class ErrorBoundary extends Component<Props, State> {
+  constructor(props: Props) {
     super(props);
-    this.state = { 
+    this.state = {
       hasError: false,
-      error: null,
-      errorInfo: null 
+      errorMessage: '',
     };
   }
 
-  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
-    return { hasError: true, error: error, errorInfo: null };
+  static getDerivedStateFromError(error: Error) {
+    // Solo actualiza el estado si el error proviene de una parte de la app que no está relacionado con el login
+    if (error.message.includes("login")) {
+      return { hasError: true, errorMessage: 'Ocurrió un error inesperado. Redirigiendo al login...' };
+    }
+    // Si no es un error relacionado con el login, no actualices el estado
+    return { hasError: false, errorMessage: '' };
   }
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
-    const navigate = useNavigate(); // Usamos el navigate aquí.
-    console.error('ErrorBoundary caught an error', error, errorInfo);
-
-    // Redirige al login con el mensaje de error
-    navigate('/login', { state: { errorMessage: error.message || 'Algo salió mal.' } });
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    // Puedes registrar el error para diagnóstico o monitoreo
+    console.error('ErrorBoundary capturó un error:', error, info);
   }
 
   render() {
     if (this.state.hasError) {
-      return null; // No renderizamos nada aquí, ya que redirigimos al login
+      // Usa <Navigate> para redirigir al login
+      return <Navigate to="/" state={{ errorMessage: this.state.errorMessage }} />;
     }
 
-    return this.props.children; 
+    return this.props.children; // Renderiza los hijos normalmente si no hay error
   }
 }
 
 export default ErrorBoundary;
+  

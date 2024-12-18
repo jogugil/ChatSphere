@@ -14,7 +14,21 @@ const Login: React.FC = () => {
   const navigate = useNavigate();
   const { setNickName: setAuthNickname, setToken, setRoomId, setRoomName } = useAuth();
   const location = useLocation();
+ // Capturar el mensaje de error desde la URL (si existe)
+ useEffect(() => {
+  const queryParams = new URLSearchParams(location.search);
+  const errorMessageFromUrl = queryParams.get('errorMessage');
 
+  // Si hay un errorMessage en la URL, mostrarlo
+  if (errorMessageFromUrl) {
+    setErrorMessage(errorMessageFromUrl);
+    setShowError(true);
+  } else {
+    // Si no hay errorMessage en la URL, no mostrar el error
+    setShowError(false);
+    setErrorMessage(null);
+  }
+}, [location]);
   // Obtener el mensaje de error desde el estado de la navegación
   useEffect(() => {
     if (location.state?.errorMessage) {
