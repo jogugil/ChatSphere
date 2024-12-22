@@ -55,6 +55,8 @@
   justify-content: flex-start; /* Alinea la imagen a la izquierda */
   align-items: center; /* Centra la imagen verticalmente si es necesario */
   overflow: hidden; /* Evita que la imagen se desborde */
+  transition: none; /* Elimina el efecto de escala en hover */
+  transform: none; /* Desactiva la animación de escala */
 }
 
 /* Logo en sí */
@@ -67,11 +69,15 @@
   margin: 0; /* Elimina cualquier margen adicional */
   align-items: center; /* Centra la imagen verticalmente si es necesario */
   padding: 0; /* Elimina cualquier relleno */
+  transition: none; /* Elimina el efecto de escala en hover */
+  transform: none; /* Desactiva la animación de escala */
 }
 
 /* Estilo cuando la imagen está en hover */
 .chat-left-column .chat-logo-container:hover img {
   filter: brightness(1) contrast(1); /* Vuelve a la imagen normal */
+  transition: none; /* Elimina el efecto de escala en hover */
+  transform: none; /* Desactiva la animación de escala */
 }
 
 /* Estilo para el título */
@@ -124,6 +130,8 @@
   gap: 20px;
   align-items: center;
   margin: 20px 0;
+  transition: none; /* Elimina el efecto de escala en hover */
+  transform: none; /* Desactiva la animación de escala */
 }
 
 /* Estilo para los banners */
@@ -132,6 +140,8 @@
   text-align: center;
   border-radius: 10px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  transition: none;
+  transform: none; /* Desactiva la animación de escala */
 }
 
 .chat-banner-programming img,
@@ -139,13 +149,10 @@
   width: 100%; /* Asegura que la imagen ocupe todo el ancho disponible */
   max-width: 600px; /* Limita el tamaño máximo de la imagen */
   border-radius: 10px;
-  transition: transform 0.3s ease-in-out;
+  transition: none; /* Elimina el efecto de escala en hover */
+  transform: none; /* Desactiva la animación de escala */
 }
 
-.chat-banner-programming img:hover,
-.chat-banner-cloud img:hover {
-  transform: scale(1.05); /* Efecto de ampliación */
-}
 
 /* Estilos para texto adicional */
 .chat-left-column p {
@@ -155,23 +162,33 @@
 }
 
  
-   
- 
 /* Contenedor de los iconos en fila horizontal */
 .chat-tech-icons {
-  display: flex; /* Alinea los iconos en fila horizontal */
+  display: flex; /* Coloca los iconos en una fila horizontal */
+  animation: chat-scroll-icons 10s linear infinite; /* Animación que mueve los iconos */
   justify-content: flex-start; /* Alinea los iconos al inicio */
   overflow-x: auto; /* Permite desplazamiento horizontal si hay más iconos */
   max-width: 100%; /* El ancho no debe exceder el contenedor */
   white-space: nowrap; /* Evita que los iconos se rompan a una nueva línea */
+  overflow: hidden; /* Elimina la barra de desplazamiento */
 }
 
+/* Contenedor de los iconos en fila horizontal */
+.chat-icon-banner {
+  width: 100%; /* Asegura que el contenedor de los iconos ocupe todo el ancho disponible */
+  overflow: hidden; /* Esconde los iconos que se salgan del contenedor */
+  margin-top: 40px;
+  overflow: hidden; /* Elimina la barra de desplazamiento */
+}
+ 
 /* Estilo de los iconos */
 .chat-tech-icons .chat-icon {
   width: 40px; /* Tamaño fijo de los iconos */
   height: 40px; /* Mantiene la proporción */
   object-fit: contain; /* Asegura que las imágenes se ajusten */
   margin-right: 10px; /* Espacio entre los iconos */
+  transition: none; /* Elimina el efecto de escala en hover */
+  transform: none; /* Desactiva la animación de escala */
 }
 /* Animación de desplazamiento de los iconos */
 @keyframes chat-scroll-icons {

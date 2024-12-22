@@ -11,7 +11,7 @@ npm init -y
 
 # Instalar las dependencias principales necesarias para el proyecto
 npm install react react-dom react-router-dom axios jsonwebtoken uuid @fortawesome/fontawesome-free
-
+install puppeteer 
 # Instalar dependencias de desarrollo (con versiones específicas)
 npm install --save-dev \
   typescript@latest --save-dev\

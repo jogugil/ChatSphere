@@ -36,12 +36,14 @@ const BannerProgramming: React.FC<BannerProgrammingProps> = ({ imageUrl, titleSl
         {/* Si el mouse está encima, mostrar el resumen */}
        {/* Si el mouse está encima, mostrar el resumen */}
        {isHovered && (
+        <div className="chat-icon-banner">
           <div className="chat-tech-icons">
             <img src="https://miro.medium.com/v2/resize:fit:740/1*rxDdNJHiz1R38J_JEz23Zw.jpeg" alt="Go" className="chat-icon" />
             <img src="https://upload.wikimedia.org/wikipedia/commons/d/d9/Node.js_logo.svg" alt="Node.js" className="chat-icon" />
             <img src="https://www.typescriptlang.org/images/branding/two-longform.svg" alt="TypeScript" className="chat-icon" />
             <img src="https://upload.wikimedia.org/wikipedia/commons/4/47/React.svg" alt="React" className="chat-icon" />
             <img src="/images/concepts.png" alt="concepts" className="chat-icon" />
+          </div>
           </div>
         )}
       </div>

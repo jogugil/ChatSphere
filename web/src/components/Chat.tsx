@@ -44,10 +44,6 @@ const Clock = () => {
 
 const Chat = () => {
 
-
-  /*
-
-  */
   const navigate = useNavigate(); //Navegar por la web de Gochat
 
   //WebSocket
@@ -68,6 +64,7 @@ const Chat = () => {
  
  
   //Control scroll zona central
+  const [scrollToBottomFlag, setScrollToBottomFlag] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   // Función para desplazarse al final del contenedor de mensajes
   const scrollToBottom = () => {
@@ -131,9 +128,7 @@ const Chat = () => {
   const [errorMessage, setErrorMessage]       = useState('');
   const [isErrorActive, setIsErrorActive]     = useState(false);
   const intervalIdRef = useRef<number | null>(null);
-   
-
-
+  
   // Controlo input envío de mensjaes
   // Tipo explícito para las claves válidas
   type EscapeChar = "<" | ">" | "&" | "\"" | "'";
@@ -224,14 +219,16 @@ const startPeriodicUpdates = ( ) => {
     throw new Error('Usuario no disponible. Por favor, intente ingresar nuevamente más tarde.'); 
   }
 
-
-
   // Ejecutar inmediatamente antes de iniciar el intervalo
   updateData();
 
   // Configurar la actualización periódica
-  intervalIdRef.current = setTimeout(() => {
-    console.log("Timeout ejecutado");
+  if (intervalIdRef.current) {
+    clearInterval(intervalIdRef.current);  // Limpiar cualquier intervalo previo
+  }
+  // Configurar la actualización periódica
+  intervalIdRef.current = setInterval(() => {
+    console.log("Intervalo ejecutado");
     updateData();
   }, timeout) as unknown as number;  // Forzar tipo como `number`
 };
@@ -263,7 +260,7 @@ const loadAliveUsers = async () => {
       console.error('Error al obtener usuarios activos:', err);
       return;
     }
-  };
+};
  
   // Obtener mensajes históricos al cargar la página
   const loadMessages = async () => {
@@ -334,7 +331,7 @@ const loadAliveUsers = async () => {
           room.updateMessages(msgList);
           // Actualizar el estado de los mensajes
           setMessages(room.messageList);
-  
+          setScrollToBottomFlag(true);
           console.log('Mensajes cargados:', room.messageList);
         }
       } else {
@@ -346,8 +343,6 @@ const loadAliveUsers = async () => {
       console.error('Error al cargar los mensajes:', err);
     }
   };
-
-  
 
   // Función para manejar el cambio en el campo de mensaje
   const handleMessageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -475,8 +470,7 @@ const loadAliveUsers = async () => {
 
   useEffect(() => {
         if (userChat && userSocketRef.current?.isConnected && messageSocketRef.current?.isConnected && initialized) {
-            
-          if (!startPolling) {
+           if (!startPolling) {
               console.log("Se llaman los updates periódicos del chat");
               startPeriodicUpdates( ); // Activa los mensajes periódicos
               setStartPolling (true); 
@@ -487,25 +481,27 @@ const loadAliveUsers = async () => {
         }
           
         // Limpiar el intervalo cuando el componente se desmonte
+         // Limpiar intervalo cuando el componente se desmonta
         return () => {
-          if (intervalIdRef.current !== null) {
-            clearInterval(intervalIdRef.current);
-            intervalIdRef.current = null;  // Limpiar la referencia después de limpiar el intervalo
+          if (intervalIdRef.current) {
+              clearInterval(intervalIdRef.current);
           }
         };
-    }, [room?._roomid]);
+  }, [room?._roomid]);
 
-   useEffect(() => {
+  useEffect(() => {
     if (connectionError) {
-            showErrorModal ("Error en la conexión con el servidor. Espere unos isntantes.");
+      showErrorModal ("Error en la conexión con el servidor. Espere unos isntantes.");
     }
   }, [connectionError]);
-   // Desplázate al final cada vez que cambien los mensajes
-   useEffect(() => {
+  
+  // Desplázate al final cada vez que cambien los mensajes
+  useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+    setScrollToBottomFlag(false); // Resetear el flag
+  }, [messages,scrollToBottomFlag]);
 
-   
+
   // Asegúrate de que tanto el usuario como el WebSocket y la sala estén listos antes de mostrar el chat
   if (!userChat || !userSocketRef.current?.isConnected || !messageSocketRef.current?.isConnected || !room) {
     return <div>Cargando...</div>; // O cualquier otro indicador de que el chat no está listo
@@ -516,14 +512,14 @@ const loadAliveUsers = async () => {
         <div className="chat-left-column">
           <div className="chat-title">ChatSphere</div>
           <div className="chat-subtitle">GoChat ZeroMQ</div>
-  
+           
           <div className="chat-logo-container">
             <div className="chat-logo">
               <img src="/images/logo.webp" alt="Logo" />
             </div>
           </div>
   
-          <div className="chat-container">
+           
             <div className="chat-banners">
               <div className="chat-banner-programming">
                 <BannerProgramming  
@@ -533,7 +529,7 @@ const loadAliveUsers = async () => {
                 />
               </div>
             </div>
-          </div>
+       
   
           <div className="footer">
             <p>&copy; 2024 José Javier Gutiérrez Gil</p>
@@ -553,8 +549,8 @@ const loadAliveUsers = async () => {
                     <strong>{msg.nickname}</strong>: {msg.message}
                   </li>
                 ))}
+                </ul>
                 <div ref={messagesEndRef} />
-              </ul>
             </div>
   
             <div className="input-section">
