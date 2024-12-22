@@ -10,14 +10,14 @@ export type UUID = string;
 export class User {
   nickname: string;
   status: string;
-  private _token: string = TOKEN_NULO;
-  private _roomId: UUID = "00000000-0000-0000-0000-000000000000"; 
+  private _token: string    = TOKEN_NULO;
+  private _roomId: UUID     = "00000000-0000-0000-0000-000000000000"; 
   private _roomName: string = "Sala Principal";
 
   constructor(nickname: string,  status: string, roomId: string, roomName: string, token: string) {
     this.nickname = nickname;
-    this.status = status;
-    this.roomId = roomId; // Esto llamará al setter que valida el UUID
+    this.status   = status;
+    this.roomId   = roomId; // Esto llamará al setter que valida el UUID
     this.roomName = roomName; // Esto llamará al setter que valida el UUID
     
     console.log(`Creando el objeto user: nick: ${nickname}, status: ${status}, roomid: ${roomId}, roomname: ${roomName}, token: ${token}`);
@@ -42,7 +42,7 @@ export class User {
       const decoded = <JwtPayload>jwtDecode(token);
       return decoded != null && this.tokenIsValid(decoded.exp);
     } catch (error) {
-      console.error('Error al validar el token:', error);
+      console.warn('Error al validar el token:', error);
       return false;
     }
   }
@@ -66,7 +66,7 @@ export class User {
       console.log ("decode token",decoded);
       return decoded ? decoded.userid : null;
     } catch (error) {
-      console.error('Error al obtener el ID del token:', error);
+      console.warn('Error al obtener el ID del token:', error);
       return null;
     }
   } 

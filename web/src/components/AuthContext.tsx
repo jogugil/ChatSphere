@@ -34,9 +34,7 @@ useEffect(() => {
     setRoomName(localStorage.getItem('roomName') || '');
   }
 }, []);
-useEffect(() => {
-  console.log('Estado de error en AuthContext:', error);
-}, [error]);
+ 
 useEffect(() => {
   console.log("Redirigiendo por error", error);
   if (error) {

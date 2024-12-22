@@ -36,27 +36,27 @@ func NuevaGestionSalas(persistencia *entities.Persistencia, configFile string) *
 	}
 	// Configuración y carga de datos solo una vez
 	instancia.once.Do(func() {
-		log.Println("NuevaGestionSalas: Iniciando la configuración de la instancia.")
+		log.Println("GestionSalas:  NuevaGestionSalas:  Iniciando la configuración de la instancia.")
 		if configFile != "" {
 			err := instancia.CargarSalasFijasDesdeArchivo(configFile)
 			if err != nil {
-				log.Fatalf("Error al cargar configuración: %v", err)
+				log.Fatalf("GestionSalas:  NuevaGestionSalas: Error al cargar configuración: %v", err)
 			}
 		}
-		log.Println("NuevaGestionSalas: Configuración completada.")
+		log.Println("GestionSalas:  NuevaGestionSalas: Configuración completada.")
 	})
 	return instancia
 }
 
 func (sm *GestionSalas) CargarSalasFijasDesdeArchivo(configFile string) error {
-	log.Printf("CargarSalasFijasDesdeArchivo: Cargando salas desde archivo: %s", configFile)
+	log.Printf("GestionSalas: CargarSalasFijasDesdeArchivo: Cargando salas desde archivo: %s", configFile)
 	if sm.SalasFijas == nil {
 		sm.SalasFijas = make(map[uuid.UUID]*entities.Room)
 	}
 	var persis, err = persistence.ObtenerInstanciaDB()
 
 	if err != nil {
-		fmt.Printf("Error al crear la instancia de MongoPersistencia:%v", err)
+		log.Printf("GestionSalas: CargarSalasFijasDesdeArchivo: Error al crear la instancia de MongoPersistencia:%v", err)
 		return err
 	}
 
@@ -69,21 +69,21 @@ func (sm *GestionSalas) CargarSalasFijasDesdeArchivo(configFile string) error {
 
 	file, err := os.Open(configFile)
 	if err != nil {
-		log.Printf("CargarSalasFijasDesdeArchivo: Error al abrir archivo: %v", err)
+		log.Printf("GestionSalas: CargarSalasFijasDesdeArchivo: Error al abrir archivo: %v", err)
 		return err
 	}
 	defer file.Close()
 
 	byteValue, err := ioutil.ReadAll(file)
 	if err != nil {
-		log.Printf("CargarSalasFijasDesdeArchivo: Error al leer archivo: %v", err)
+		log.Printf("GestionSalas: CargarSalasFijasDesdeArchivo: Error al leer archivo: %v", err)
 		return err
 	}
 
 	var salas []map[string]interface{}
 	err = json.Unmarshal(byteValue, &salas)
 	if err != nil {
-		log.Printf("CargarSalasFijasDesdeArchivo: Error al parsear JSON: %v", err)
+		log.Printf("GestionSalas: CargarSalasFijasDesdeArchivo: Error al parsear JSON: %v", err)
 		return err
 	}
 
@@ -94,13 +94,13 @@ func (sm *GestionSalas) CargarSalasFijasDesdeArchivo(configFile string) error {
 	for _, salaData := range salas {
 		salaID, err_par := uuid.Parse(salaData["id"].(string))
 		if err_par != nil {
-			log.Printf("CargarSalasFijasDesdeArchivo: Error al parsear ID: %v", err_par)
+			log.Printf("GestionSalas: CargarSalasFijasDesdeArchivo: Error al parsear ID: %v", err_par)
 			return err_par
 		}
 		var persis, err_per = persistence.ObtenerInstanciaDB()
 
 		if err_per != nil {
-			fmt.Printf("Error al crear la instancia de MongoPersistencia:%v", err_per)
+			log.Printf("GestionSalas: Error al crear la instancia de MongoPersistencia:%v", err_per)
 			return err_per
 		}
 		sala := &entities.Room{
@@ -111,17 +111,17 @@ func (sm *GestionSalas) CargarSalasFijasDesdeArchivo(configFile string) error {
 		}
 		sm.SalasFijas[salaID] = sala
 	}
-	log.Println("CargarSalasFijasDesdeArchivo: Carga completada.")
+	log.Println("GestionSalas: CargarSalasFijasDesdeArchivo: Carga completada.")
 	return nil
 }
 
 func (sm *GestionSalas) CrearSalaTemporal(nombre string) *entities.Room {
-	log.Printf("CrearSalaTemporal: Creando sala temporal con nombre: %s", nombre)
+	log.Printf("GestionSalas: CrearSalaTemporal: Creando sala temporal con nombre: %s", nombre)
 	sm.mu.Lock()
 	defer sm.mu.Unlock()
 
 	if sm.persistencia == nil {
-		log.Fatal("CrearSalaTemporal: Persistencia no inicializada.")
+		log.Fatal("GestionSalas: CrearSalaTemporal: Persistencia no inicializada.")
 	}
 
 	sala := &entities.Room{
@@ -130,173 +130,173 @@ func (sm *GestionSalas) CrearSalaTemporal(nombre string) *entities.Room {
 		RoomType:       "Temporal",
 		MessageHistory: entities.NewCircularQueue(sm.persistencia),
 	}
-	log.Printf("CrearSalaTemporal: Sala temporal creada con ID: %s", sala.RoomId)
+	log.Printf("GestionSalas: CrearSalaTemporal: Sala temporal creada con ID: %s", sala.RoomId)
 	return sala
 }
 
 func (sm *GestionSalas) ObtenerSalaPorID(idSala uuid.UUID) (*entities.Room, error) {
-	log.Printf("ObtenerSalaPorID: Buscando sala con ID: %s", idSala)
+	log.Printf("GestionSalas: ObtenerSalaPorID: Buscando sala con ID: %s", idSala)
 
 	sm.mu.RLock()
-	log.Printf("Lock adquirido para lectura de la sala con ID %s", idSala)
+	log.Printf("GestionSalas: ObtenerSalaPorID: Lock adquirido para lectura de la sala con ID %s", idSala)
 	defer func() {
 		sm.mu.RUnlock()
-		log.Printf("Lock liberado para lectura de la sala con ID %s", idSala)
+		log.Printf("GestionSalas: ObtenerSalaPorID: Lock liberado para lectura de la sala con ID %s", idSala)
 	}()
 
 	if sm.SalaPrincipal != nil && sm.SalaPrincipal.RoomId == idSala {
-		log.Println("ObtenerSalaPorID: Sala principal encontrada.")
+		log.Println("GestionSalas: ObtenerSalaPorID: Sala principal encontrada.")
 		return sm.SalaPrincipal, nil
 	}
 
 	if sala, existe := sm.SalasFijas[idSala]; existe {
-		log.Printf("ObtenerSalaPorID: Sala fija encontrada con ID: %s", idSala)
+		log.Printf("GestionSalas: ObtenerSalaPorID: Sala fija encontrada con ID: %s", idSala)
 		return sala, nil
 	}
 
-	log.Printf("ObtenerSalaPorID: Sala no encontrada con ID: %s", idSala)
+	log.Printf("GestionSalas: ObtenerSalaPorID: Sala no encontrada con ID: %s", idSala)
 	return nil, fmt.Errorf("la sala con ID %s no existe", idSala)
 }
 
 func (sm *GestionSalas) EnviarMensaje(idSala uuid.UUID, nickname, mensaje string, usuario entities.User) error {
-	log.Printf("EnviarMensaje: Enviando mensaje a la sala con ID: %s", idSala)
+	log.Printf("GestionSalas: EnviarMensaje: Enviando mensaje a la sala con ID: %s", idSala)
 
 	// Primero obtenemos la sala con RLock, ya que estamos haciendo una lectura
 	sala, err := sm.ObtenerSalaPorID(idSala)
 	if err != nil {
-		log.Printf("EnviarMensaje: Error al obtener sala: %v", err)
+		log.Printf("GestionSalas: EnviarMensaje: Error al obtener sala: %v", err)
 		return err
 	}
 
 	nuevoMensaje := models.CrearMensajeConFecha(mensaje, usuario, idSala, sala.RoomName, usuario.LastActionTime)
-	fmt.Printf("Nuevo mensaje creado: %+v\n", nuevoMensaje)
+	log.Printf("GestionSalas: Nuevo mensaje creado: %+v\n", nuevoMensaje)
 
 	// Modificamos el historial de mensajes
-	sala.MessageHistory.Enqueue(*nuevoMensaje)
-	log.Printf("EnviarMensaje: Mensaje enviado a la sala con ID: %s - %v \n", idSala, nuevoMensaje)
+	sala.MessageHistory.Enqueue(*nuevoMensaje, sala.RoomId)
+	log.Printf("GestionSalas: EnviarMensaje: Mensaje enviado a la sala con ID: %s - %v \n", idSala, nuevoMensaje)
 	return nil
 }
 
 // Función para obtener mensajes de una sala
 func (sm *GestionSalas) ObtenerMensajesDesdeId(idSala uuid.UUID, idMensaje uuid.UUID) ([]entities.Message, error) {
-	log.Printf("ObtenerMensajesDesdeId: Obteniendo mensajes desde ID %s en la sala %s", idMensaje, idSala)
+	log.Printf("GestionSalas: ObtenerMensajesDesdeId: Obteniendo mensajes desde ID %s en la sala %s", idMensaje, idSala)
 	sm.mu.RLock() // Lectura, se puede hacer concurrentemente
 	defer sm.mu.RUnlock()
 
 	sala, err := sm.ObtenerSalaPorID(idSala)
 	if err != nil {
-		log.Printf("ObtenerMensajesDesdeId: Error al obtener sala: %v", err)
+		log.Printf("GestionSalas: ObtenerMensajesDesdeId: Error al obtener sala: %v", err)
 		return nil, fmt.Errorf("la sala con ID %s no existe", idSala)
 	}
 	if sala == nil {
-		log.Printf("ObtenerMensajesDesdeId: Error al obtener sala: sala es nil")
-		return nil, fmt.Errorf("sala no encontrada con ID: %s", idSala)
+		log.Printf("GestionSalas: ObtenerMensajesDesdeId: Error al obtener sala: sala es nil")
+		return nil, fmt.Errorf("GestionSalas: sala no encontrada con ID: %s", idSala)
 	}
 	cola := sala.MessageHistory
 	// Verificar si la cola es nula
 	if cola == nil {
-		log.Println("Error: La cola es nula.")
-		return nil, fmt.Errorf("la cola es nula en la sala con ID %s ", idSala)
+		log.Println("GestionSalas: ObtenerMensajesDesdeId: Error: La cola es nula.")
+		return nil, fmt.Errorf("GestionSalas: ObtenerMensajesDesdeId: la cola es nula en la sala con ID %s ", idSala)
 	}
 
 	mensajes, err := cola.ObtenerMensajesDesdeId(idSala, idMensaje)
 	if err != nil {
-		log.Printf("ObtenerMensajesDesdeId: Error al obtener mensajes: %v", err)
-		return nil, fmt.Errorf("error en ObtenerPorUltimoIdMensaje: %v", err)
+		log.Printf("GestionSalas: ObtenerMensajesDesdeId: Error al obtener mensajes: %v", err)
+		return nil, fmt.Errorf("GestionSalas: error en ObtenerPorUltimoIdMensaje: %v", err)
 	}
 
-	log.Printf("ObtenerMensajesDesdeId: Mensajes obtenidos correctamente (%d mensajes)", len(mensajes))
+	log.Printf("GestionSalas: ObtenerMensajesDesdeId: Mensajes obtenidos correctamente (%d mensajes)", len(mensajes))
 	return mensajes, nil
 }
 
 // Función para obtener todos los mensajes de una sala
 func (sm *GestionSalas) ObtenerMensajes(idSala uuid.UUID) ([]entities.Message, error) {
-	log.Printf("ObtenerMensajes: Obteniendo todos los mensajes de la sala %s", idSala)
+	log.Printf("GestionSalas: ObtenerMensajes: Obteniendo todos los mensajes de la sala %s", idSala)
 	sm.mu.RLock() // Lectura, se puede hacer concurrentemente
 	defer sm.mu.RUnlock()
 
 	sala, err := sm.ObtenerSalaPorID(idSala)
 	if err != nil {
-		log.Printf("ObtenerMensajes: Error al obtener sala: %v", err)
+		log.Printf("GestionSalas: ObtenerMensajes: Error al obtener sala: %v", err)
 		return nil, fmt.Errorf("la sala con ID %s no existe", idSala)
 	}
 	cola := sala.MessageHistory
 	mensajes, err := cola.ObtenerTodos(idSala)
 	if err != nil {
-		log.Printf("ObtenerMensajes: Error al obtener mensajes: %v", err)
-		return nil, fmt.Errorf("error en ObtenerMensajes: %v", err)
+		log.Printf("GestionSalas: ObtenerMensajes: Error al obtener mensajes: %v", err)
+		return nil, fmt.Errorf("GestionSalas: error en ObtenerMensajes: %v", err)
 	}
 
-	log.Printf("ObtenerMensajes: Mensajes obtenidos correctamente (%d mensajes)", len(mensajes))
+	log.Printf("GestionSalas: ObtenerMensajes: Mensajes obtenidos correctamente (%d mensajes)", len(mensajes))
 	return mensajes, nil
 }
 
-func (sm *GestionSalas) ObtenerMensajesCantidad(idSala uuid.UUID, cantidad int) ([]entities.Message, error) {
-	log.Printf("ObtenerMensajesCantidad: Obteniendo %d mensajes de la sala %s", cantidad, idSala)
+func (sm *GestionSalas) ObtenerMensajesCantidad(idSala uuid.UUID, idMensaje uuid.UUID, cantidad int) ([]entities.Message, error) {
+	log.Printf("GestionSalas: ObtenerMensajesCantidad: Obteniendo %d mensajes de la sala %s", cantidad, idSala)
 	sm.mu.Lock()
 	defer sm.mu.Unlock()
 
 	// Validación previa
 	sala, err := sm.ObtenerSalaPorID(idSala)
 	if err != nil {
-		log.Printf("ObtenerMensajesCantidad: Error al obtener sala: %v", err)
+		log.Printf("GestionSalas: ObtenerMensajesCantidad: Error al obtener sala: %v", err)
 		return nil, fmt.Errorf("la sala con ID %s no existe", idSala)
 	}
 
 	// Mejorar rendimiento si la cantidad es mayor que los mensajes disponibles
 	cola := sala.MessageHistory
-	mensajes, err := cola.ObtenerMensajes(idSala, cantidad)
+	mensajes, err := cola.ObtenerMensajes(idSala, idMensaje, cantidad)
 	if err != nil {
-		log.Printf("ObtenerMensajesCantidad: Error al obtener mensajes: %v", err)
+		log.Printf("GestionSalas: ObtenerMensajesCantidad: Error al obtener mensajes: %v", err)
 		return nil, fmt.Errorf("error en ObtenerMensajes: %v", err)
 	}
 
-	log.Printf("ObtenerMensajesCantidad: Mensajes obtenidos correctamente (%d mensajes)", len(mensajes))
+	log.Printf("GestionSalas: ObtenerMensajesCantidad: Mensajes obtenidos correctamente (%d mensajes)", len(mensajes))
 	return mensajes, nil
 }
 
 func (sm *GestionSalas) UnirseASala(usuarioId string, salaFijaID string) (*entities.Room, error) {
-	log.Printf("UnirseASala: Usuario %s intentando unirse a la sala fija %s", usuarioId, salaFijaID)
+	log.Printf("GestionSalas: UnirseASala: Usuario %s intentando unirse a la sala fija %s", usuarioId, salaFijaID)
 
 	if salaFijaID != "" {
 		salaUUID, err := uuid.Parse(salaFijaID)
 		if err != nil {
-			log.Printf("UnirseASala: Error al parsear ID de sala fija: %v", err)
+			log.Printf("GestionSalas: UnirseASala: Error al parsear ID de sala fija: %v", err)
 			return nil, fmt.Errorf("el ID de la sala fija %s no es un UUID válido: %v", salaFijaID, err)
 		}
 
 		// Mejorar la búsqueda con un "if" temprano
 		sala, existe := sm.SalasFijas[salaUUID]
 		if !existe {
-			log.Printf("UnirseASala: Sala fija no encontrada con ID: %s", salaFijaID)
+			log.Printf("GestionSalas: UnirseASala: Sala fija no encontrada con ID: %s", salaFijaID)
 			return nil, fmt.Errorf("la sala fija con ID %s no existe", salaFijaID)
 		}
 
-		log.Printf("UnirseASala: Usuario %s unido a la sala fija %s", usuarioId, salaFijaID)
+		log.Printf("GestionSalas: UnirseASala: Usuario %s unido a la sala fija %s", usuarioId, salaFijaID)
 		return sala, nil
 	}
 
-	log.Printf("UnirseASala: Usuario %s unido a la sala principal", usuarioId)
+	log.Printf("GestionSalas: UnirseASala: Usuario %s unido a la sala principal", usuarioId)
 	return sm.SalaPrincipal, nil
 }
 
 func (gestion *GestionSalas) ObtenerTodosLosMensajes(idSala uuid.UUID) ([]entities.Message, error) {
-	log.Printf("ObtenerTodosLosMensajes: Obteniendo todos los mensajes únicos de la sala %s", idSala)
+	log.Printf("GestionSalas: ObtenerTodosLosMensajes: Obteniendo todos los mensajes únicos de la sala %s", idSala)
 
 	if gestion.persistencia == nil {
-		log.Println("ObtenerTodosLosMensajes: Persistencia no inicializada")
+		log.Println("GestionSalas: ObtenerTodosLosMensajes: Persistencia no inicializada")
 		return nil, fmt.Errorf("persistencia no inicializada")
 	}
 
 	mensajesBD, err := (*gestion.persistencia).ObtenerMensajesDesdeSala(idSala)
 	if err != nil {
-		log.Printf("ObtenerTodosLosMensajes: Error al obtener mensajes de la base de datos: %v", err)
+		log.Printf("GestionSalas: ObtenerTodosLosMensajes: Error al obtener mensajes de la base de datos: %v", err)
 		return nil, fmt.Errorf("error al obtener mensajes de la base de datos: %v", err)
 	}
 
 	sala, err := gestion.ObtenerSalaPorID(idSala)
 	if err != nil {
-		log.Printf("ObtenerTodosLosMensajes: Error al obtener sala: %v", err)
+		log.Printf("GestionSalas: ObtenerTodosLosMensajes: Error al obtener sala: %v", err)
 		return nil, fmt.Errorf("la sala con ID %s no existe", idSala)
 	}
 
@@ -316,20 +316,20 @@ func (gestion *GestionSalas) ObtenerTodosLosMensajes(idSala uuid.UUID) ([]entiti
 		mensajesUnicos = append(mensajesUnicos, mensaje)
 	}
 
-	log.Printf("ObtenerTodosLosMensajes: Mensajes únicos obtenidos (%d mensajes)", len(mensajesUnicos))
+	log.Printf("GestionSalas: ObtenerTodosLosMensajes: Mensajes únicos obtenidos (%d mensajes)", len(mensajesUnicos))
 	return mensajesUnicos, nil
 }
 
 func (gestion *GestionSalas) ObtenerMensajesDesdeCola(idSala uuid.UUID) ([]entities.Message, error) {
-	log.Printf("ObtenerMensajesDesdeCola: Obteniendo mensajes desde la cola de la sala %s", idSala)
+	log.Printf("GestionSalas: ObtenerMensajesDesdeCola: Obteniendo mensajes desde la cola de la sala %s", idSala)
 
 	sala, err := gestion.ObtenerSalaPorID(idSala)
 	if err != nil {
-		log.Printf("ObtenerMensajesDesdeCola: Error al obtener sala: %v", err)
+		log.Printf("GestionSalas: ObtenerMensajesDesdeCola: Error al obtener sala: %v", err)
 		return nil, fmt.Errorf("la sala con ID %s no existe", idSala)
 	}
 
 	mensajesCola := sala.MessageHistory.ObtenerElementos()
-	log.Printf("ObtenerMensajesDesdeCola: Mensajes obtenidos desde la cola (%d mensajes)", len(mensajesCola))
+	log.Printf("GestionSalas: ObtenerMensajesDesdeCola: Mensajes obtenidos desde la cola (%d mensajes)", len(mensajesCola))
 	return mensajesCola, nil
 }

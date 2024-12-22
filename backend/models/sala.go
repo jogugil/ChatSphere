@@ -43,7 +43,7 @@ func (sala *LocalSala) EnviarMensaje(usuario entities.User, mensaje entities.Mes
 	log.Printf("EnviarMensaje: Entrando con usuario %v y mensaje %v en la sala %s", usuario, mensaje, sala.RoomName)
 
 	// Operación clave: Añadir el mensaje a la cola
-	sala.MessageHistory.Enqueue(mensaje)
+	sala.MessageHistory.Enqueue(mensaje, usuario.RoomId)
 
 	log.Printf("EnviarMensaje: Mensaje %v añadido correctamente a la cola de la sala %s", mensaje, sala.RoomName)
 }
@@ -55,6 +55,7 @@ func (sala *LocalSala) ObtenerMensajesSala() []entities.Message {
 	mensajes, err := sala.MessageHistory.ObtenerTodos(sala.RoomId)
 	if err != nil {
 		log.Printf("ObtenerMensajesSala: Error al obtener mensajes de la sala %s: %v", sala.RoomName, err)
+
 		return nil
 	}
 
@@ -64,6 +65,7 @@ func (sala *LocalSala) ObtenerMensajesSala() []entities.Message {
 
 func (sala *LocalSala) ObtenerMensajesdesdeId(idMensaje uuid.UUID) []entities.Message {
 	log.Printf("ObtenerMensajesdesdeId: Entrando con idMensaje %v para la sala %s", idMensaje, sala.RoomName)
+	log.Printf("ObtenerMensajesdesdeId: sala.MessageHistory: %v", sala.MessageHistory)
 
 	// Operación clave: Obtener mensajes desde un ID específico
 	mensajes, err := sala.MessageHistory.ObtenerMensajesDesdeId(sala.RoomId, idMensaje)
@@ -71,6 +73,7 @@ func (sala *LocalSala) ObtenerMensajesdesdeId(idMensaje uuid.UUID) []entities.Me
 		log.Printf("ObtenerMensajesdesdeId: Error al obtener mensajes desde ID %v en la sala %s: %v", idMensaje, sala.RoomName, err)
 		return nil
 	}
+	log.Printf("ObtenerMensajesdesdeId: mensajes: %v", mensajes)
 
 	log.Printf("ObtenerMensajesdesdeId: Mensajes obtenidos correctamente desde ID %v en la sala %s", idMensaje, sala.RoomName)
 	return mensajes

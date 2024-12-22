@@ -1,7 +1,6 @@
 package persistence
 
 import (
-	"fmt"
 	"log"
 	"time"
 
@@ -36,14 +35,14 @@ func TestTuFuncionMongoDB() {
 	}
 
 	// 1. Test de GuardarUsuario
-	fmt.Println("Iniciando prueba de GuardarUsuario...")
+	log.Println("Iniciando prueba de GuardarUsuario...")
 	startTime := time.Now()
 	err = (*persistencia).GuardarUsuario(usuario)
 	duration := time.Since(startTime)
 	if err != nil {
-		fmt.Printf("Error en GuardarUsuario: %v\n", err)
+		log.Printf("Error en GuardarUsuario: %v\n", err)
 	} else {
-		fmt.Printf("GuardarUsuario completado en %v\n", duration)
+		log.Printf("GuardarUsuario completado en %v\n", duration)
 	}
 
 	// 2. Test de GuardarSala
@@ -51,25 +50,25 @@ func TestTuFuncionMongoDB() {
 		RoomId:   uuid.New(),
 		RoomName: "SalaTest",
 	}
-	fmt.Println("Iniciando prueba de GuardarSala...")
+	log.Println("Iniciando prueba de GuardarSala...")
 	startTime = time.Now()
 	err = (*persistencia).GuardarSala(sala)
 	duration = time.Since(startTime)
 	if err != nil {
-		fmt.Printf("Error en GuardarSala: %v\n", err)
+		log.Printf("Error en GuardarSala: %v\n", err)
 	} else {
-		fmt.Printf("GuardarSala completado en %v\n", duration)
+		log.Printf("GuardarSala completado en %v\n", duration)
 	}
 
 	// 3. Test de ObtenerSala
-	fmt.Println("Iniciando prueba de ObtenerSala...")
+	log.Println("Iniciando prueba de ObtenerSala...")
 	startTime = time.Now()
 	_, err = (*persistencia).ObtenerSala(sala.RoomId)
 	duration = time.Since(startTime)
 	if err != nil {
-		fmt.Printf("Error en ObtenerSala: %v\n", err)
+		log.Printf("Error en ObtenerSala: %v\n", err)
 	} else {
-		fmt.Printf("ObtenerSala completado en %v\n", duration)
+		log.Printf("ObtenerSala completado en %v\n", duration)
 	}
 
 	// 4. Test de GuardarMensaje
@@ -82,35 +81,35 @@ func TestTuFuncionMongoDB() {
 		Token:       "token_123",
 		MessageText: "Este es un mensaje de prueba",
 	}
-	fmt.Println("Iniciando prueba de GuardarMensaje...")
+	log.Println("Iniciando prueba de GuardarMensaje...")
 	startTime = time.Now()
 	err = (*persistencia).GuardarMensaje(mensaje)
 	duration = time.Since(startTime)
 	if err != nil {
-		fmt.Printf("Error en GuardarMensaje: %v\n", err)
+		log.Printf("Error en GuardarMensaje: %v\n", err)
 	} else {
-		fmt.Printf("GuardarMensaje completado en %v\n", duration)
+		log.Printf("GuardarMensaje completado en %v\n", duration)
 	}
 
 	// 5. Test de ObtenerMensajesDesdeSala
-	fmt.Println("Iniciando prueba de ObtenerMensajesDesdeSala...")
+	log.Println("Iniciando prueba de ObtenerMensajesDesdeSala...")
 	startTime = time.Now()
 	_, err = (*persistencia).ObtenerMensajesDesdeSala(sala.RoomId)
 	duration = time.Since(startTime)
 	if err != nil {
-		fmt.Printf("Error en ObtenerMensajesDesdeSala: %v\n", err)
+		log.Printf("Error en ObtenerMensajesDesdeSala: %v\n", err)
 	} else {
-		fmt.Printf("ObtenerMensajesDesdeSala completado en %v\n", duration)
+		log.Printf("ObtenerMensajesDesdeSala completado en %v\n", duration)
 	}
 
 	// 6. Test de ObtenerMensajesDesdeId
-	fmt.Println("Iniciando prueba de ObtenerMensajesDesdeId...")
+	log.Println("Iniciando prueba de ObtenerMensajesDesdeId...")
 	startTime = time.Now()
-	_, err = (*persistencia).ObtenerMensajesDesdeId(sala.RoomId, mensaje.MessageId)
+	_, err = (*persistencia).ObtenerMensajesDesdeSalaPorId(sala.RoomId, mensaje.MessageId)
 	duration = time.Since(startTime)
 	if err != nil {
-		fmt.Printf("Error en ObtenerMensajesDesdeId: %v\n", err)
+		log.Printf("Error en ObtenerMensajesDesdeId: %v\n", err)
 	} else {
-		fmt.Printf("ObtenerMensajesDesdeId completado en %v\n", duration)
+		log.Printf("ObtenerMensajesDesdeId completado en %v\n", duration)
 	}
 }

@@ -1,7 +1,7 @@
 package comm
 
 import (
-	"fmt"
+	"log"
 	"net/http"
 )
 
@@ -11,7 +11,7 @@ func StartWebSocketServer(address string) {
 	go func() {
 		// Iniciar el servidor WebSocket
 		if err := http.ListenAndServe(address, nil); err != nil {
-			fmt.Println("Error al iniciar el servidor WebSocket:", err)
+			log.Println("Error al iniciar el servidor WebSocket:", err)
 		}
 	}()
 }

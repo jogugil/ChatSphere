@@ -42,7 +42,7 @@ type ResponseListMessage struct {
 
 // Estructura de datos para enviar en la solicitud
 type RequestUserData struct {
-	RoomId      string `json:"idSala"`
+	RoomId      string `json:"roomId"`
 	TokenSesion string `json:"tokenSesion"`
 	Nickname    string `json:"nickname"`
 	Operation   string `json:"operation"`
@@ -189,7 +189,7 @@ func obtenerMensajes(conn *websocket.Conn, nickname, idsala, token, ultimoIdMens
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("MENSAJE RECIBIDO (como string): %s\n", string(msg))
+	log.Printf("MENSAJE RECIBIDO (como string): %s\n", string(msg))
 	// Verificar si la respuesta es un objeto único o un array de mensajes
 	var mensajeIndividual ResponseListMessage
 	err = json.Unmarshal(msg, &mensajeIndividual)
@@ -197,7 +197,7 @@ func obtenerMensajes(conn *websocket.Conn, nickname, idsala, token, ultimoIdMens
 		// Si no hubo error al deserializar como mensaje individual, lo empaquetamos en un slice
 		return nil, fmt.Errorf("error al deserializar la respuesta lista de mensajes nuevos: %v", err)
 	}
-	fmt.Printf("MENSAJE DE LSITADO : %v\n", mensajeIndividual)
+	log.Printf("MENSAJE DE LSITADO : %v\n", mensajeIndividual)
 	return mensajeIndividual.ListMessage, nil
 }
 
@@ -266,7 +266,7 @@ func ejecutarPeticionesPeriodicas(conn *websocket.Conn, nickname, idsala, token 
 				return
 			} else {
 				// Imprimir los usuarios recibidos
-				fmt.Println("Usuarios recibidos:")
+				log.Println("Usuarios recibidos:")
 				MostrarUsuarios(usuarios)
 			}
 
@@ -278,7 +278,7 @@ func ejecutarPeticionesPeriodicas(conn *websocket.Conn, nickname, idsala, token 
 				return
 			} else {
 				// Imprimir los mensajes recibidos
-				fmt.Println("Mensajes recibidos:")
+				log.Println("Mensajes recibidos:")
 				MostrarMensajes(mensajes)
 			}
 
@@ -290,7 +290,7 @@ func ejecutarPeticionesPeriodicas(conn *websocket.Conn, nickname, idsala, token 
 }
 func main() {
 	// Solicitar el nickname al usuario
-	fmt.Print("Introduce tu nickname: ")
+	log.Print("Introduce tu nickname: ")
 	var nickname string
 	fmt.Scanln(&nickname)
 
@@ -299,13 +299,13 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error en el login: %v", err)
 	}
-	fmt.Printf("LloginResp.status: %s \n", loginResp.Status)
-	fmt.Printf("LloginResp.Message: %s \n", loginResp.Message)
-	fmt.Printf("Login exitoso! Token: %s, Sala: %s\n", loginResp.Token, loginResp.RoomName)
-	fmt.Printf("LloginResp.Idsala: %s \n", loginResp.RoomId)
+	log.Printf("LloginResp.status: %s \n", loginResp.Status)
+	log.Printf("LloginResp.Message: %s \n", loginResp.Message)
+	log.Printf("Login exitoso! Token: %s, Sala: %s\n", loginResp.Token, loginResp.RoomName)
+	log.Printf("LloginResp.Idsala: %s \n", loginResp.RoomId)
 
 	// Pedir el primer mensaje
-	fmt.Print("Introduce el mensaje a enviar: ")
+	log.Println("Introduce el mensaje a enviar: ")
 	var mensaje string
 	scanner := bufio.NewScanner(os.Stdin)
 	scanner.Scan()
@@ -316,7 +316,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error al enviar el mensaje: %v", err)
 	}
-	fmt.Println("Mensaje enviado correctamente")
+	log.Println("Mensaje enviado correctamente")
 
 	// Conectar al WebSocket para obtener la lista de mensajes
 	conn, err := conectarWebSocket()
@@ -343,7 +343,7 @@ func main() {
 		log.Fatalf("Error al obtener usuarios 1: %v", err_u1)
 	} else {
 		// Imprimir los mensajes recibidos
-		fmt.Println("usuarios recibidos 1 :")
+		log.Println("usuarios recibidos 1 :")
 		MostrarUsuarios(usuarios)
 	}
 
@@ -353,7 +353,7 @@ func main() {
 		log.Fatalf("Error al obtener mensajes: %v", err)
 	} else {
 		// Imprimir los mensajes recibidos
-		fmt.Println("Mensajes recibidos 1:")
+		log.Println("Mensajes recibidos 1:")
 		MostrarMensajes(mensajes)
 	}
 
@@ -361,7 +361,7 @@ func main() {
 	time.Sleep(2 * time.Second) // Espera 2 segundos antes de cerrar
 
 	// Pedir el segundo mensaje
-	fmt.Print("Introduce el segundo mensaje a enviar: ")
+	log.Println("Introduce el segundo mensaje a enviar: ")
 	scanner.Scan()
 	mensaje2 := scanner.Text()
 
@@ -370,7 +370,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error al enviar el mensaje: %v", err)
 	}
-	fmt.Println("Segundo mensaje enviado correctamente")
+	log.Println("Segundo mensaje enviado correctamente")
 
 	// Intentamos recuperar la lista de mensajes nuevos (el segundo mensaje enviado)
 	mensajes, err_m2 := obtenerMensajes(conn, loginResp.Nickname, loginResp.RoomId, loginResp.Token, "00000000-0000-0000-0000-000000000000")
@@ -378,7 +378,7 @@ func main() {
 		log.Fatalf("Error al obtener mensajes: %v", err_m2)
 	} else {
 		// Imprimir los mensajes recibidos
-		fmt.Println("Mensajes recibidos 2:")
+		log.Println("Mensajes recibidos 2:")
 		MostrarMensajes(mensajes)
 	}
 
@@ -388,7 +388,7 @@ func main() {
 		log.Fatalf("Error al obtener usuarios 2: %v", err_u)
 	} else {
 		// Imprimir los mensajes recibidos
-		fmt.Println("usuarios recibidos 2 :")
+		log.Println("usuarios recibidos 2 :")
 		MostrarUsuarios(usuarios)
 	}
 
@@ -407,28 +407,28 @@ func main() {
 // Función para mostrar los elementos
 func MostrarMensajes(mensajes []MessageResponse) {
 	for i, mensaje := range mensajes {
-		fmt.Printf("Mensaje %d:\n", i+1)
-		fmt.Printf("  ID: %s\n", mensaje.MessageId.String())
-		fmt.Printf("  Nickname: %s\n", mensaje.Nickname)
-		fmt.Printf("  Texto: %s\n", mensaje.MessageText)
+		log.Printf("Mensaje %d:\n", i+1)
+		log.Printf("  ID: %s\n", mensaje.MessageId.String())
+		log.Printf("  Nickname: %s\n", mensaje.Nickname)
+		log.Printf("  Texto: %s\n", mensaje.MessageText)
 	}
 }
 
 // Función MostrarUsuarios que filtra por idSala y muestra los usuarios activos
 func MostrarUsuarios(usuarios ResponseUser) {
 	// Mostrar el ID de la sala y los usuarios activos
-	fmt.Printf("Sala: %s\n", usuarios.RoomId)
+	log.Printf("Sala: %s\n", usuarios.RoomId)
 	// Iterar sobre cada ResponseUser en el slice de usuarios
 	if len(usuarios.AliveUsers) == 0 {
-		fmt.Println("No hay usuarios activos en esta sala.")
+		log.Println("No hay usuarios activos en esta sala.")
 	} else {
 		listuser := usuarios.AliveUsers
 		for _, usuario := range listuser {
 			// Mostrar el Nickname y la Hora de la última acción
-			fmt.Printf("Usuario: %s, Última acción: %s\n", usuario.Nickname, usuario.LastActionTime)
+			log.Printf("Usuario: %s, Última acción: %s\n", usuario.Nickname, usuario.LastActionTime)
 		}
 	}
 
 	// Si no se encuentra ninguna sala con el idSala proporcionado
-	fmt.Println("Sala no encontrada o no hay usuarios activos.")
+	log.Println("Sala no encontrada o no hay usuarios activos.")
 }

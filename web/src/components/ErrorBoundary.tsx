@@ -30,7 +30,7 @@ class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, info: ErrorInfo) {
     // Puedes registrar el error para diagnóstico o monitoreo
-    console.error('ErrorBoundary capturó un error:', error, info);
+    console.warn('ErrorBoundary capturó un error:', error, info);
   }
 
   render() {

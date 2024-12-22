@@ -45,7 +45,7 @@ export const login = async (nickname: string): Promise<LoginResponse> => {
       roomname: data.roomname || '',
     } as LoginResponse;
   } catch (error: any) {
-    console.error('Error during login:', error);
+    console.warn('Error during login:', error);
 
     // Detectar errores específicos
     if (error.code === 'ERR_NETWORK') {
@@ -114,7 +114,7 @@ export const sendMessage = async (nickName: string, token: string, roomId: strin
     }
   } catch (error) {
     // Si hay un error en la solicitud (por ejemplo, error de conexión o servidor fuera de servicio)
-    console.error('Error en la solicitud:', error);
+    console.warn('Error en la solicitud:', error);
     console.log(`sendMessage:response:${error}`);
     return JSON.stringify({
       status: 'error',
@@ -138,62 +138,64 @@ requestData := map[string]string{
 // Definir la función callback para procesar la respuesta
 const handleMessage = (event: MessageEvent): any => {
   const message = event.data;
-
+  console.log ("<<<<<< Dentro de handleMessage >>>>>")
   // Procesar el mensaje recibido
-  try {
-    const parsedData = JSON.parse(message); // Intentamos parsear el mensaje como JSON
-    return parsedData;  // Devuelve el objeto procesado
+  try {    
+    return message;  // Devuelve el objeto procesado
   } catch (error) {
-    console.error('Error al parsear el mensaje:', error);
+    console.warn('Error al parsear el mensaje:', error);
     return message;  // Si no se puede parsear, devolvemos el mensaje como string
   }
 };
 
 export const getMessages = async (
   socketManager: WebSocketManager, 
-  nickName: string, 
+  nickname: string, 
   token: string, 
   roomId: UUID, 
   roomName: string, 
-  lastSeenMessageId: UUID | null | undefined, 
+  lastmessageid: UUID | null | undefined, 
   x_gochat: string
 ): Promise<string> => {
   
   const requestData = {
-    nickname: nickName,
     roomid: roomId,
-    roomname: roomName,
-    tokensession: token,
-    lastmessageid: lastSeenMessageId,
+    tokensesion: token,
+    nickname: nickname,
+    lastmessageid:lastmessageid,
     operation: "listmenssage",
-    x_gochat: x_gochat,
+    x_gochat: x_gochat 
   };
 
   try {
+    console.log ("<<<<<< Dentro de getMessages >>>>>");
+    console.log ("<<<<<< requestData: ",requestData);
     // Obtener el WebSocket real desde WebSocketManager
     const ws = socketManager.getSocket();
-
+    
     if (!ws) {
       throw new Error('WebSocket no disponible.');
     }
+    console.log ("Obtengo el websocket con url:",ws?.url)
     socketManager.setOnMessageCallback(handleMessage);
+    console.log (" he creado setOnMessageCallback " );
     // Promise que se resuelve cuando la conexión WebSocket se abre
-    const wsPromise = new Promise<WebSocket>((resolve, reject) => {
-      ws.onopen = () => resolve(ws);
-      ws.onerror = (err) => reject(new Error(`getMessages :::: WebSocket error: ${err}`));
-    });
+    // Verificar si el WebSocket está abierto antes de enviar el mensaje
+    if (ws.readyState === WebSocket.OPEN) {
+      console.log("WebSocket ya está abierto, enviando datos:", requestData);
+      ws.send(JSON.stringify(requestData));  // Enviar los datos a través del WebSocket
+      console.log("Enviando los siguientes datos al WebSocket:", JSON.stringify(requestData));
 
-    await wsPromise;
+    } else {
+      throw new Error('WebSocket no está abierto.');
+    }
 
-    // Enviar los datos a través del WebSocket
-    ws.send(JSON.stringify(requestData));
-
- 
-    // Esperar a que se reciba el mensaje y se procese con handleMessage
-    return new Promise<any>((resolve, reject) => {
+    // Esperar y procesar la respuesta
+    return new Promise<string>((resolve, reject) => {
       ws.onmessage = (event) => {
         try {
           const result = handleMessage(event);  // Usamos el callback `handleMessage`
+          console.log("Me llega el resultado response:", result);
           resolve(result);  // Devolvemos el resultado procesado
         } catch (error) {
           reject(error);
@@ -202,7 +204,7 @@ export const getMessages = async (
 
       // Manejar errores durante la conexión WebSocket
       ws.onerror = (err) => {
-        console.error("Error de WebSocket:", err);
+        console.warn("Error de WebSocket:", err);
         reject(new Error('Error de WebSocket'));
       };
     });
@@ -228,7 +230,28 @@ export const getMessages = async (
 		Nickname:    nickname,
 		Operation:   "listusers",
 		X_GoChat:    "http://localhost:8081",
+
+
 	}
+
+  		var aliveUsers []AliveUsers
+		for _, usuario := range usuarios {
+			aliveUsers = append(aliveUsers, AliveUsers{
+				Nickname:       usuario.Nickname,
+				LastActionTime: usuario.LastActionTime.Format("2006-01-02 15:04:05"), // Formato estándar de fecha y hora
+			})
+		}
+
+		// Preparar la respuesta
+		respChan <- ResponseUser{
+			Status:      "OK",
+			Message:     "Usuarios activos obtenidos correctamente.",
+			TokenSesion: requestData.TokenSesion,
+			Nickname:    requestData.Nickname,
+			RoomId:      requestData.RoomId,
+			AliveUsers:  aliveUsers,
+			X_GoChat:    urlClient,
+		}
   */
 export const getAliveUsers = async (
   socketManager: WebSocketManager, 
@@ -237,6 +260,9 @@ export const getAliveUsers = async (
   roomId: string, 
   x_gochat: string
 ): Promise<string> => {
+  
+  console.log ("<<<<<< Dentro de getAliveUsers >>>>>")
+
   // Crear los datos que se enviarán en el WebSocket
   const requestData = {
     roomid: roomId,
@@ -253,34 +279,38 @@ export const getAliveUsers = async (
     if (!ws) {
       throw new Error('WebSocket no disponible.');
     }
-
+    console.log ("Obtengo el websocket con url:",ws?.url)
+    socketManager.setOnMessageCallback(handleMessage);
+    console.log (" he creado setOnMessageCallback " );
     // Promise que se resuelve cuando la conexión WebSocket se abre
-    const wsPromise = new Promise<WebSocket>((resolve, reject) => {
-      ws.onopen = () => resolve(ws);
-      ws.onerror = (err) => reject(new Error(`getAliveUsers ::: WebSocket error: ${err}`));
-    });
-
-    await wsPromise;
-
-    // Enviar los datos a través del WebSocket
-    ws.send(JSON.stringify(requestData));
-
-    // Esperar y procesar la respuesta
-    return new Promise<string>((resolve, reject) => {
-      ws.onmessage = (event) => {
-        const response = event.data;
-        console.log('Respuesta completa:', response);
-        resolve(response);
-      };
-
-      // Manejar errores durante la conexión WebSocket
-      ws.onerror = (err) => {
-        console.error("Error de WebSocket:", err);
-        reject(new Error('Error de WebSocket'));
-      };
-    });
-  } catch (error) {
-    console.error('Error al conectar con WebSocket:', error);
-    throw error;
+   // Verificar si el WebSocket está abierto antes de enviar el mensaje
+   if (ws.readyState === WebSocket.OPEN) {
+    console.log("WebSocket ya está abierto, enviando datos:", requestData);
+    ws.send(JSON.stringify(requestData));  // Enviar los datos a través del WebSocket
+  } else {
+    throw new Error('WebSocket no está abierto.');
   }
+
+  // Esperar y procesar la respuesta
+  return new Promise<string>((resolve, reject) => {
+    ws.onmessage = (event) => {
+      try {
+        const result = handleMessage(event);  // Usamos el callback `handleMessage`
+        console.log("Me llega el resultado response:", result);
+        resolve(result);  // Devolvemos el resultado procesado
+      } catch (error) {
+        reject(error);
+      }
+    };
+
+    // Manejar errores durante la conexión WebSocket
+    ws.onerror = (err) => {
+      console.error("Error de WebSocket:", err);
+      reject(new Error('Error de WebSocket'));
+    };
+  });
+} catch (error) {
+  console.error('Error al conectar con WebSocket:', error);
+  throw error;
+}
 };

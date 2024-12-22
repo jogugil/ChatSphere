@@ -38,6 +38,11 @@ func RecargarVariablesDeEntorno() {
 	envVars["URIMongo"] = os.Getenv("MONGODB_URI")
 	envVars["NameMongo"] = os.Getenv("NAME_MONGO")
 	envVars["SizeQueue"] = os.Getenv("EXP_SIZE_QMESSAGE")
+	envVars["LogFile"] = os.Getenv("LOGFILE_GOCHAT")
+	envVars["EmailAdmin"] = os.Getenv("EMAIL_ADMIN")
+	envVars["GMAIL_USER"] = os.Getenv("GMAIL_USER")
+	envVars["GMAIL_PASS"] = os.Getenv("GMAIL_PASS")
+	envVars["GIN_MODE"] = os.Getenv("GIN_MODE")
 }
 
 // CargarVariablesDeEntorno carga las variables de entorno desde un archivo .env
@@ -45,7 +50,7 @@ func CargarVariablesDeEntorno() {
 	once.Do(func() {
 		// Cargar el archivo .env
 		if err := godotenv.Load(); err != nil {
-			log.Fatal("Error cargando el archivo .env")
+			log.Fatal("CargarVariablesDeEntorno: Error cargando el archivo .env")
 		}
 
 		// Inicializar el mapa para guardar las variables de entorno

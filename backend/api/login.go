@@ -2,7 +2,6 @@ package api
 
 import (
 	"backend/services"
-	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -17,12 +16,12 @@ func LoginHandler(c *gin.Context) {
 	}
 
 	// Log de entrada de la solicitud
-	fmt.Println("Recibiendo datos de solicitud...")
+	log.Println("Recibiendo datos de solicitud...")
 
 	// Decodificar los datos JSON de la solicitud
 	if err := c.ShouldBindJSON(&requestData); err != nil {
 		// Log de error en la decodificación de datos
-		fmt.Printf("Error al decodificar el JSON de la solicitud: %v", err)
+		log.Printf("Error al decodificar el JSON de la solicitud: %v", err)
 
 		// Si hay un error en el body de la solicitud, devolver un error HTTP 400
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -33,7 +32,7 @@ func LoginHandler(c *gin.Context) {
 	}
 
 	// Log de los datos recibidos
-	fmt.Println("Datos recibidos de la solicitud:", requestData)
+	log.Println("Datos recibidos de la solicitud:", requestData)
 
 	// Obtener la instancia del singleton
 	secMod, err := services.GetSecModServidorChat()
@@ -47,11 +46,11 @@ func LoginHandler(c *gin.Context) {
 		return
 	}
 	// Llamar a EjecutarLogin con el nickname recibido
-	fmt.Println("Ejecutando login para el usuario:", requestData.Nickname)
+	log.Println("Ejecutando login para el usuario:", requestData.Nickname)
 	usuario, err := secMod.EjecutarLogin(requestData.Nickname)
 	if err != nil {
 		// Log del error en el proceso de login
-		fmt.Printf("Error al ejecutar login para el usuario: %v", err)
+		log.Printf("Error al ejecutar login para el usuario: %v", err)
 
 		// Crear un objeto de respuesta con campos vacíos
 		responseData := gin.H{
@@ -80,7 +79,7 @@ func LoginHandler(c *gin.Context) {
 	}
 
 	// Log de los datos del usuario después del login
-	fmt.Printf("Login exitoso. Datos del usuario: Token: %s, Nickname: %s, Sala ID: %v, Sala Name: %s\n",
+	log.Printf("Login exitoso. Datos del usuario: Token: %s, Nickname: %s, Sala ID: %v, Sala Name: %s\n",
 		usuario.Token, usuario.Nickname, usuario.RoomId, usuario.RoomName)
 
 	// Responder con un JSON de éxito si el login es exitoso
@@ -94,7 +93,7 @@ func LoginHandler(c *gin.Context) {
 	}
 
 	// Log de la respuesta enviada
-	fmt.Println("Enviando respuesta:", responseData)
+	log.Println("Enviando respuesta:", responseData)
 
 	c.JSON(http.StatusOK, responseData)
 }

@@ -1,9 +1,11 @@
 package models
 
 import (
-	"fmt"
-	"time"
 	"backend/utils"
+	"fmt"
+	"log"
+	"time"
+
 	"github.com/golang-jwt/jwt/v4"
 )
 
@@ -22,7 +24,7 @@ func CrearTokenSesion(nickname string) string {
 	// Obtener la clave secreta desde el entorno
 	secretKey, err := utils.ObtenerVariableDeEntorno("SecretKey")
 	if err != nil {
-		fmt.Printf("Error al obtener la clave secreta: %v", err)
+		log.Printf("Error al obtener la clave secreta: %v", err)
 		return ""
 	}
 
@@ -41,12 +43,13 @@ func CrearTokenSesion(nickname string) string {
 	// Firmar el token
 	signedToken, err := token.SignedString([]byte(secretKey))
 	if err != nil {
-		fmt.Println("Error al generar el token: ", err)
+		log.Println("Error al generar el token: ", err)
 		return ""
 	}
 
 	return signedToken
 }
+
 // ValidarTokenSesion valida un token JWT y devuelve el nickname si es válido
 func ValidarTokenSesion(tokenStr string) (string, error) {
 	// Obtener la clave secreta desde el entorno

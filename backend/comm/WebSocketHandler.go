@@ -22,14 +22,14 @@ func WebSocketHandler(c *gin.Context) {
 	// Establecer la conexión WebSocket
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
-		log.Println("Error al establecer WebSocket:", err)
+		log.Println("WebSocketHandler: Error al establecer WebSocket:", err)
 		return
 	}
 	defer func() {
 		if err := conn.Close(); err != nil {
-			log.Println("Error al cerrar la conexión WebSocket:", err)
+			log.Println("WebSocketHandler: Error al cerrar la conexión WebSocket:", err)
 		} else {
-			log.Println("Conexión WebSocket cerrada correctamente")
+			log.Println("WebSocketHandler: Conexión WebSocket cerrada correctamente")
 		}
 	}()
 	// Obtener la URL de la solicitud HTTP original
@@ -37,24 +37,24 @@ func WebSocketHandler(c *gin.Context) {
 	for {
 		_, msg, err := conn.ReadMessage()
 		if err != nil {
-			log.Printf("Error al leer mensaje WebSocket:%v", err)
-			log.Printf("Error al ReadMessage:%v", msg)
+			log.Printf("WebSocketHandler: Error al leer mensaje WebSocket:%v", err)
+			log.Printf("WebSocketHandler: Error al ReadMessage:%v", msg)
 
 			break
 		}
 		trimmedMsg := strings.TrimSpace(string(msg))
 		if len(trimmedMsg) == 0 {
-			log.Println("Mensaje vacío o solo con espacios recibido, ignorando.")
+			log.Println("WebSocketHandler: Mensaje vacío o solo con espacios recibido, ignorando.")
 			continue
 		}
 		if len(msg) == 0 {
-			log.Println("Mensaje vacío recibido, ignorando.")
+			log.Println("WebSocketHandler: Mensaje vacío recibido, ignorando.")
 			continue
 		}
 		var data map[string]string
 		err = json.Unmarshal(msg, &data)
 		if err != nil {
-			log.Printf("Error al deserializar el mensaje:%v", err)
+			log.Printf("WebSocketHandler: Error al deserializar el mensaje:%v", err)
 			msgr, _ := json.Marshal(`{"status": "error", "message": "Error al deserializar el mensaje"}`)
 			conn.WriteMessage(websocket.TextMessage, msgr)
 			continue
@@ -62,7 +62,7 @@ func WebSocketHandler(c *gin.Context) {
 
 		operacion, exists := data["operation"]
 		if !exists {
-			log.Println("No se encontró la clave 'operation' en el mensaje")
+			log.Println("WebSocketHandler: No se encontró la clave 'operation' en el mensaje")
 			msgr, _ := json.Marshal(`{"status": "error", "message": "No se encontró la clave 'operation' en el mensaje"}`)
 			conn.WriteMessage(websocket.TextMessage, msgr)
 			continue
@@ -82,7 +82,7 @@ func WebSocketHandler(c *gin.Context) {
 
 		err = conn.WriteMessage(websocket.TextMessage, response)
 		if err != nil {
-			log.Println("Error al enviar mensaje WebSocket:", err)
+			log.Println("WebSocketHandler: Error al enviar mensaje WebSocket:", err)
 		}
 	}
 }
@@ -90,21 +90,21 @@ func WebSocketHandler(c *gin.Context) {
 // Aquí solo retornas una cadena de texto (JSON) que representa la respuesta
 func callPostListHandler(msg []byte, urlClient string) []byte {
 	// Llamamos a la función correspondiente del API
-	log.Printf("callPostListHandler: %v", msg)
+	//log.Printf("callPostListHandler: %s", string(msg))
 	result := api.PostListHandler(msg, urlClient) // Llamar a la función de API pasando la request
 	return result
 }
 
 func callPostUsersHandler(msg []byte, urlClient string) []byte {
 	// Llamamos a la función correspondiente del API
-	log.Printf("callPostUsersHandler: %v", msg)
+	//log.Printf("callPostUsersHandler: %v", msg)
 	result := api.PostUsersHandler(msg, urlClient) // Llamar a la función de API pasando la request
 	return result
 }
 
 // Tu función que maneja el "heat" y devuelve el código 202
 func callheatHandler(msg []byte, urlClient string) []byte {
-	log.Printf("callheatHandler procesando solicitud: %v", msg)
+	log.Printf("WebSocketHandler: callheatHandler procesando solicitud: %v", msg)
 	// Si todo va bien, se establece el código de estado 202 y se envía la respuesta
 	errorJSON, err := json.Marshal(map[string]interface{}{
 		"status":   "OK",
@@ -112,7 +112,7 @@ func callheatHandler(msg []byte, urlClient string) []byte {
 		"message":  "Request accepted for processing",
 	})
 	if err != nil {
-		log.Printf("sendErrorResponse: Error al serializar el mensaje de error:%v", err)
+		log.Printf("WebSocketHandler: sendErrorResponse: Error al serializar el mensaje de error:%v", err)
 		return errorJSON
 	}
 	return errorJSON

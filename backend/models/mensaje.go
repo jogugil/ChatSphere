@@ -1,7 +1,7 @@
 package models
 
 import (
-	"fmt"
+	"log"
 	"time"
 
 	"backend/entities"
@@ -42,6 +42,6 @@ func CrearMensajeConFecha(mensajeText string, usuario entities.User, idSala uuid
 // Generador de ID de mensajes
 func generarIDMensaje() uuid.UUID {
 	newUUID := uuid.New()
-	fmt.Println("** CrearMensajeConFecha. generarIDMensaje : Nuevo UUID generado:", newUUID) // Imprimir para verificar
+	log.Println("** CrearMensajeConFecha. generarIDMensaje : Nuevo UUID generado:", newUUID) // Imprimir para verificar
 	return newUUID
 }

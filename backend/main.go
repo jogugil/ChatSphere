@@ -7,8 +7,13 @@ import (
 	"backend/services"
 	"backend/utils"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
+	"os"
+	"strings"
+
+	_ "net/http/pprof" // Activar pprof
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -23,12 +28,54 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
+// FilteredWriter es un tipo que implementa io.Writer y filtra los logs.
+type FilteredWriter struct {
+	allowedClasses []string
+	writer         io.Writer
+}
+
+// Implementa el método Write para que se filtre según las clases permitidas.
+func (f *FilteredWriter) Write(p []byte) (n int, err error) {
+	message := string(p)
+	for _, class := range f.allowedClasses {
+		if strings.Contains(message, class) {
+			return f.writer.Write(p) // Si el mensaje contiene una clase permitida, lo escribe.
+		}
+	}
+	return len(p), nil // Si no es una clase permitida, lo ignora.
+}
+
 // OJO!! TEnemos que arrancar el servidor de mongodb antes, sino no funcionará
 //  sudo docker run --name mongodb -d -p 27017:27017 mongo:latest
 
 func main() {
 	log.SetFlags(log.Lshortfile)
 	utils.CargarVariablesDeEntorno()
+	// Filtrar logs de una clase específica
+	// Creamos un FilteredWriter que filtra solo las clases permitidas.
+	filter := &FilteredWriter{
+		allowedClasses: []string{"PostListHandler", "WebSocketHandler", "GestionSalas",
+			"NewMessageHandler", "SecModServidorChat", "CircularQueue"}, // Define las clases que deseas permitir
+		writer: io.Discard, // Inicialmente no escribimos en ningún lado
+	}
+
+	// Redirigimos el log estándar al filtro.
+	log.SetOutput(filter)
+
+	ginMode, err := utils.ObtenerVariableDeEntorno("GIN_MODE")
+	if err != nil {
+		ginMode = "debug" // Valor por defecto si no se configura
+	}
+
+	if ginMode == "release" {
+		gin.SetMode(gin.ReleaseMode)
+	} else {
+		gin.SetMode(gin.DebugMode)
+	}
+
+	// Configuramos un writer que sí imprimirá en consola.
+	consoleWriter := io.Writer(os.Stdout)
+	filter.writer = consoleWriter // Redirige los logs permitidos a la consola
 
 	// Configuración de la base de datos
 	uriMongo, err := utils.ObtenerVariableDeEntorno("URIMongo")
@@ -53,11 +100,11 @@ func main() {
 	salasManager := secMod.GestionSalas
 
 	// Imprimimos la sala principal
-	fmt.Printf("Sala Principal: %s, ID: %s\n", salasManager.SalaPrincipal.RoomName, salasManager.SalaPrincipal.RoomId)
+	log.Printf("Sala Principal: %s, ID: %s\n", salasManager.SalaPrincipal.RoomName, salasManager.SalaPrincipal.RoomId)
 
 	// Imprimimos las salas fijas
 	for id, sala := range salasManager.SalasFijas {
-		fmt.Printf("Sala Fija: %s, ID: %s\n", sala.RoomName, id)
+		log.Printf("Sala Fija: %s, ID: %s\n", sala.RoomName, id)
 	}
 
 	r := gin.Default()
@@ -125,7 +172,10 @@ func main() {
 			log.Fatalf("Error al iniciar el servidor HTTP: %v", err)
 		}
 	}()
-
+	// Iniciar servidor para pprof en un goroutine
+	go func() {
+		log.Println(http.ListenAndServe("localhost:6060", nil))
+	}()
 	// Mantener el servidor activo
 	select {} // Mantener el servidor activo
 }

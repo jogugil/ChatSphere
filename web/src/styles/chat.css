@@ -657,7 +657,7 @@
 }
 
 /****************************************************/
-/******************* ERROIR*************************/
+/******************* ERROR*************************/
 /**************************************************/
 div.chat-error-message {
   position: fixed;
@@ -671,4 +671,22 @@ div.chat-error-message {
   background-color: rgba(f, f, f, 0.7);
   padding: 20px;
   color: white;
+}
+
+
+/****************************************************/
+/******************* nickname *************************/
+/**************************************************/
+.user-nickname {
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: #555;
+}
+
+
+.nickname-value {
+  font-style: italic;
+  font-weight: bold;
+  font-size: 18px;
+  color: #007bff; /* Azul profesional */
 }

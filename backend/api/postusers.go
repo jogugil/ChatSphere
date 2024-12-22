@@ -41,19 +41,19 @@ func PostUsersHandler(msg []byte, urlClient string) []byte {
 	go func() {
 		// Decodificar la solicitud
 		if err := json.Unmarshal(msg, &requestData); err != nil {
-			log.Printf("Error al decodificar la solicitud: %v", err)
+			log.Printf("PostUsersHandler: Error al decodificar la solicitud: %v", err)
 			respChan <- ResponseUser{
 				Status:  "NOK",
 				Message: "Solicitud incorrecta. Error al decodificar la solicitud cod:00",
 			}
 			return
 		}
-		log.Printf("PostListHandler: Datos de solicitud decodificados: %+v\n", requestData)
+		log.Printf("PostUsersHandler: Datos de solicitud decodificados: %+v\n", requestData)
 
 		// Obtener la instancia del singleton
 		secMod, err := services.GetSecModServidorChat()
 		if err != nil {
-			log.Printf("Error al obtener el servidor chat. : %v", err)
+			log.Printf("PostUsersHandler: Error al obtener el servidor chat. : %v", err)
 			respChan <- ResponseUser{
 				Status:   "NOK",
 				Message:  "Servicio chat no disponible",
@@ -61,7 +61,7 @@ func PostUsersHandler(msg []byte, urlClient string) []byte {
 			}
 			return
 		}
-		log.Printf("Singleton de servidor de chat obtenido: %v", secMod)
+		log.Printf("PostUsersHandler: Singleton de servidor de chat obtenido: %v", secMod)
 
 		// Validar IdSala
 		idSala, err := uuid.Parse(requestData.RoomId)
@@ -74,8 +74,8 @@ func PostUsersHandler(msg []byte, urlClient string) []byte {
 			}
 			return
 		}
-		log.Printf("IdSala validado correctamente: %v", idSala)
-		log.Println("PostUsersHandler: Validando token de sesión.")
+		log.Printf("PostUsersHandler: IdSala validado correctamente: %v", idSala)
+		log.Println("PostUsersHandler:  Validando token de sesión.")
 		_, err = models.ValidarTokenSesion(requestData.TokenSesion)
 		if err != nil {
 			log.Printf("PostUsersHandler: Error al validar el token: %v", err)
@@ -98,7 +98,7 @@ func PostUsersHandler(msg []byte, urlClient string) []byte {
 
 			return
 		}
-		log.Printf("Usuarios activos obtenidos para la sala %v: %v", idSala, usuarios)
+		log.Printf("PostUsersHandler: Usuarios activos obtenidos para la sala %v: %v", idSala, usuarios)
 
 		// Construir la respuesta con la información de la sala y los usuarios activos
 		var aliveUsers []AliveUsers
@@ -127,7 +127,7 @@ func PostUsersHandler(msg []byte, urlClient string) []byte {
 	// Serializar la respuesta a JSON
 	responseJSON, err := json.Marshal(response)
 	if err != nil {
-		log.Printf("Error al serializar la respuesta: %v", err)
+		log.Printf("PostUsersHandler: Error al serializar la respuesta: %v", err)
 		// Manejo de error de serialización
 		errorResponse := ResponseUser{
 			Status:  "NOK",
@@ -135,10 +135,10 @@ func PostUsersHandler(msg []byte, urlClient string) []byte {
 		}
 		responseJSON, err = json.Marshal(errorResponse)
 		if err != nil {
-			log.Printf("Error al serializar la respuesta de error: %v", err)
+			log.Printf("PostUsersHandler: Error al serializar la respuesta de error: %v", err)
 		}
 	}
-
+	log.Printf("PostUsersHandler: Usuarios activos enviando el mensaje: %s", responseJSON)
 	// Retornar la respuesta
 	return responseJSON
 }

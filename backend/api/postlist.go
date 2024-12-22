@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/google/uuid"
 )
@@ -15,8 +16,8 @@ import (
 type RequestData struct {
 	Operation     string `json:"operation"`
 	LastMessageId string `json:"lastmessageid"`
-	TokenSesion   string `json:"tokenSesion"`
-	Nickname      string `json:"nickName"`
+	TokenSesion   string `json:"tokensesion"`
+	Nickname      string `json:"nickname"`
 	RoomId        string `json:"roomid"`
 	X_GoChat      string `json:"x_gochat"`
 }
@@ -130,7 +131,7 @@ func PostListHandler(msg []byte, urlClient string) []byte {
 			return
 		}
 
-		log.Println("PostListHandler: Llamando al servicio para obtener mensajes desde el IdUltimoMensaje.")
+		log.Printf("PostListHandler: Llamando al servicio para obtener mensajes desde el IdUltimoMensaje:[%s].", requestData.LastMessageId)
 		idmensaje, err := uuid.Parse(requestData.LastMessageId)
 		if err != nil {
 			log.Printf("PostListHandler: Error al validar el idmensaje: %v", err)
@@ -143,12 +144,38 @@ func PostListHandler(msg []byte, urlClient string) []byte {
 
 		mensajes, err := secMod.GestionSalas.ObtenerMensajesDesdeId(idSalaUUID, idmensaje)
 		if err != nil {
+			// Verificar si el error contiene el mensaje "no se encontraron mensajes en la sala
+			log.Printf("PostListHandler:   %v", err)
+			if strings.Contains(err.Error(), "no se encontraron mensajes en la sala") {
+				// Si el error contiene esa frase, respondemos con OK y un mensaje adecuado
+				respChan <- Response{
+					Status:      "OK",
+					Message:     "No se encontraron mensajes en la sala",
+					ListMessage: nil, // Devolvemos null o una lista vacía si lo prefieres
+				}
+				return
+			}
+
+			// Si el error no contiene la frase esperada, procesamos como un error general
 			log.Printf("PostListHandler: Error al obtener los mensajes: %v", err)
 			respChan <- Response{
 				Status:  "NOK",
 				Message: fmt.Sprintf("Error al obtener los mensajes: %v", err),
 			}
 			return
+		}
+		// Mostrar los mensajes por pantalla
+		log.Printf("PostListHandler: Contenido de mensajes: %+v", mensajes)
+		// Eliminar el mensaje con el ID igual al de LastMessageId
+
+		for i := 0; i < len(mensajes); {
+			if mensajes[i].MessageId.String() == requestData.LastMessageId {
+				// Eliminar mensaje del slice
+				mensajes = append(mensajes[:i], mensajes[i+1:]...)
+				log.Printf(" --> mensajes[%d]: %+v", i, mensajes)
+			} else {
+				i++
+			}
 		}
 
 		// Si no hay mensajes nuevos, devolver solo OK
@@ -167,6 +194,7 @@ func PostListHandler(msg []byte, urlClient string) []byte {
 
 		// Si hay mensajes, devolver la lista con un OK
 		log.Println("PostListHandler: Devolviendo mensajes obtenidos correctamente.")
+		log.Printf("PostListHandler: mensajesResponse: %s", mensajesResponse)
 		respChan <- Response{
 			Status:      "OK",
 			Message:     "Mensajes obtenidos correctamente.",
@@ -198,5 +226,6 @@ func PostListHandler(msg []byte, urlClient string) []byte {
 	}
 
 	// Enviar la respuesta por WebSocket
+	log.Printf("Lista mensaje activos. enviando el mensaje: %s", responseJSON)
 	return responseJSON
 }

@@ -6,7 +6,6 @@ import (
 	"backend/persistence"
 	"backend/types"
 	"errors"
-	"fmt"
 	"log"
 	"sync"
 )
@@ -38,70 +37,70 @@ func NuevaGestionUsuarios() *GestionUsuarios {
 }
 
 func (gestion *GestionUsuarios) BuscarUsuarioPorToken(token string) (entities.User, error) {
-	fmt.Println("Iniciando búsqueda de usuario por token:", token)
+	log.Println("Iniciando búsqueda de usuario por token:", token)
 	for _, usuario := range gestion.Usuarios {
 		if usuario.Token == token {
-			fmt.Println("Usuario encontrado:", usuario.Nickname)
+			log.Println("Usuario encontrado:", usuario.Nickname)
 			return *usuario, nil
 		}
 	}
-	fmt.Println("Usuario no encontrado para el token:", token)
+	log.Println("Usuario no encontrado para el token:", token)
 	return entities.User{}, errors.New("usuario no encontrado")
 }
 
 func (gestion *GestionUsuarios) ObtenerTokenDeUsuario(nickname string) (string, error) {
-	fmt.Println("Obteniendo token para el usuario:", nickname)
+	log.Println("Obteniendo token para el usuario:", nickname)
 	for _, usuario := range gestion.Usuarios {
 		if usuario.Nickname == nickname {
-			fmt.Println("Token encontrado para el usuario:", usuario.Token)
+			log.Println("Token encontrado para el usuario:", usuario.Token)
 			return usuario.Token, nil
 		}
 	}
-	fmt.Println("Usuario no encontrado para el nickname:", nickname)
+	log.Println("Usuario no encontrado para el nickname:", nickname)
 	return "", errors.New("usuario no encontrado")
 }
 
 // VerificarUsuarioExistente verifica si un usuario con el nickname dado ya está registrado
 func (gestion *GestionUsuarios) VerificarUsuarioExistente(nickname string) bool {
-	fmt.Println("Verificando si el usuario ya existe:", nickname)
+	log.Println("Verificando si el usuario ya existe:", nickname)
 	for _, usuario := range gestion.Usuarios {
 		if usuario.Nickname == nickname {
-			fmt.Println("Usuario ya registrado:", nickname)
+			log.Println("Usuario ya registrado:", nickname)
 			return false // Usuario ya registrado
 		}
 	}
-	fmt.Println("Usuario no registrado:", nickname)
+	log.Println("Usuario no registrado:", nickname)
 	return true // Usuario no registrado
 }
 
 // Función que registra un usuario y lo guarda en la base de datos
 func (gestion *GestionUsuarios) RegistrarUsuario(nickname string, token string, sala *entities.Room) (*entities.User, error) {
-	fmt.Println("Registrando nuevo usuario:", nickname)
+	log.Println("Registrando nuevo usuario:", nickname)
 
 	// Crear un nuevo usuario con la sala proporcionada
 	nuevoUsuario := models.NewUsuarioGo(nickname, sala)
-	fmt.Println("Nuevo usuario creado:", nuevoUsuario.Nickname)
+	log.Println("Nuevo usuario creado:", nuevoUsuario.Nickname)
 
 	// Crear una nueva instancia de MongoPersistencia
 	mongoPersistencia, err_per := persistence.ObtenerInstanciaDB()
 	if err_per != nil {
-		fmt.Println("Error al crear la instancia de MongoPersistencia:", err_per)
+		log.Println("Error al crear la instancia de MongoPersistencia:", err_per)
 		return nil, err_per
 	}
 
 	// Guardar el usuario en la base de datos
-	fmt.Println("Guardando usuario en la base de datos...")
+	log.Println("Guardando usuario en la base de datos...")
 	err_per = (*mongoPersistencia).GuardarUsuario(nuevoUsuario)
 	if err_per != nil {
-		fmt.Println("Error al guardar el usuario:", err_per)
+		log.Println("Error al guardar el usuario:", err_per)
 		return nil, err_per
 	} else {
-		fmt.Println("Usuario guardado correctamente en la base de datos")
+		log.Println("Usuario guardado correctamente en la base de datos")
 	}
 
 	// Añadir el usuario a la lista de usuarios en memoria
 	gestion.Usuarios = append(gestion.Usuarios, nuevoUsuario)
-	fmt.Println("Usuario añadido a la lista en memoria:", nuevoUsuario.Nickname)
+	log.Println("Usuario añadido a la lista en memoria:", nuevoUsuario.Nickname)
 	return nuevoUsuario, nil
 }
 

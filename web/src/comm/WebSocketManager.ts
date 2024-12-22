@@ -72,7 +72,7 @@ export class WebSocketManager {
  
 
     this.socket.onerror = (error) => {
-      console.error(`Error en WebSocket para ${this.socketId}:`, error);
+      console.warn(`Error en WebSocket para ${this.socketId}:`, error);
     
       const errorMessage = `Error en WebSocket (${this.socketId}): ` + 
         (error instanceof ErrorEvent ? error.message : "Error desconocido");

@@ -11,7 +11,11 @@ interface WErrorMessageProps {
   minimized: boolean;
   iconType: "error" | "info"; // Mantén el tipo de icono como string literal
 }
-
+function getStackTrace() {
+  const error = new Error();
+  const stack = error.stack || ''; // Accesses the stack trace
+  console.log('Stack trace:', stack);  // Prints the stack trace
+}
 // ErrorMessage.tsx
 export const WErrorMessage = ({
   message,
@@ -22,6 +26,11 @@ export const WErrorMessage = ({
   minimized,
   iconType,  // Asegúrate de que iconType está definido
 }: WErrorMessageProps) => {
+  
+  console.log("Dentro de WErrorMessage con mensaje:",message);
+  console.log("Dentro de WErrorMessage con showError:",showError);
+  console.log("Dentro de WErrorMessage con isDarkMode:",isDarkMode);
+  console.log("Dentro de WErrorMessage con minimized:",minimized);
   return (
     showError && (
       <div

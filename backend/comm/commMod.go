@@ -1,7 +1,7 @@
 package comm
 
 import (
-	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/gorilla/websocket"
@@ -20,7 +20,7 @@ func HandleConnections(w http.ResponseWriter, r *http.Request) {
 	// Establecer la conexión WebSocket
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		return
 	}
 	defer conn.Close()
@@ -32,7 +32,7 @@ func HandleConnections(w http.ResponseWriter, r *http.Request) {
 	for {
 		messageType, p, err := conn.ReadMessage()
 		if err != nil {
-			fmt.Printf("Error al leer mensaje:%v", err)
+			log.Printf("Error al leer mensaje:%v", err)
 			break
 		}
 
@@ -40,7 +40,7 @@ func HandleConnections(w http.ResponseWriter, r *http.Request) {
 		// Ejemplo: reenviar el mensaje a todos los clientes conectados
 		for client := range clients {
 			if err := client.WriteMessage(messageType, p); err != nil {
-				fmt.Printf("Error enviando mensaje:%v", err)
+				log.Printf("Error enviando mensaje:%v", err)
 				client.Close()
 				delete(clients, client) // Eliminar cliente si no se puede enviar el mensaje
 			}
